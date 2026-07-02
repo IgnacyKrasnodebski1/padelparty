@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<meta name="theme-color" content="#6C5CE7" />
+<title>PadelParty 🎾</title>
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="icon" href="icon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="PadelParty" />
+<style>
+  :root{
+    --ink:#14161C; --muted:#7A8090; --line:#ECEDF3;
+    --card:#FFFFFF; --bg:#F1F2F8;
+    --purple:#6C5CE7; --blue:#2D6CFF; --lime:#66D01A; --coral:#FF5A5F;
+    --amber:#FF9F1A; --teal:#12B886; --pink:#FF4D8D; --gold:#FFC531;
+    --g1:linear-gradient(135deg,#6C5CE7,#2D6CFF);
+    --g2:linear-gradient(135deg,#FF5A5F,#FF9F1A);
+    --g3:linear-gradient(135deg,#12B886,#2D6CFF);
+    --g4:linear-gradient(135deg,#FF4D8D,#6C5CE7);
+    --g5:linear-gradient(135deg,#FF9F1A,#FFC531);
+    --sh:0 8px 24px rgba(20,22,28,.08);
+    --sh2:0 12px 34px rgba(20,22,28,.14);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg); color:var(--ink);
+    max-width:520px; margin:0 auto; min-height:100vh;
+    padding-bottom:92px; position:relative; overflow-x:hidden;
+    -webkit-user-select:none; user-select:none; -webkit-touch-callout:none;
+    overscroll-behavior-y:contain;
+  }
+  input,textarea{-webkit-user-select:text; user-select:text}
+  h1,h2,h3,h4{margin:0}
+  button{font-family:inherit; cursor:pointer; border:none; background:none; color:inherit}
+  input,select{font-family:inherit; font-size:16px}
+  .app{padding:0 16px}
+
+  /* Header */
+  .hero{ padding:calc(22px + env(safe-area-inset-top)) 16px 20px; color:#fff; border-radius:0 0 28px 28px; box-shadow:var(--sh); position:relative; overflow:hidden}
+  .hero.h-home{background:var(--g1)} .hero.h-play{background:var(--g3)}
+  .hero.h-rank{background:var(--g4)} .hero.h-tour{background:var(--g2)} .hero.h-me{background:var(--g5)}
+  .hero .kick{font-size:12px; font-weight:800; letter-spacing:2px; text-transform:uppercase; opacity:.85}
+  .hero h1{font-size:26px; font-weight:900; letter-spacing:-.5px; margin-top:3px}
+  .hero .sub{opacity:.92; font-size:14px; margin-top:6px; font-weight:600}
+  .hero .blob{position:absolute; width:180px; height:180px; border-radius:50%; background:rgba(255,255,255,.14); top:-70px; right:-40px}
+  .hero .blob2{position:absolute; width:120px; height:120px; border-radius:50%; background:rgba(255,255,255,.10); bottom:-60px; left:-30px}
+  .heroTop{display:flex; align-items:center; justify-content:space-between; position:relative; z-index:2}
+
+  /* Avatar */
+  .av{width:40px;height:40px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:20px;flex:0 0 auto;box-shadow:0 4px 12px rgba(0,0,0,.15)}
+  .av.sm{width:30px;height:30px;border-radius:10px;font-size:15px}
+  .av.lg{width:74px;height:74px;border-radius:22px;font-size:38px}
+
+  section{margin-top:18px}
+  .rowlbl{display:flex;align-items:center;justify-content:space-between;margin:0 2px 10px}
+  .rowlbl h3{font-size:16px;font-weight:900;letter-spacing:-.2px}
+  .rowlbl .lnk{font-size:13px;font-weight:800;color:var(--purple)}
+
+  .card{background:var(--card); border-radius:20px; box-shadow:var(--sh); padding:16px}
+  .card+.card{margin-top:12px}
+  .muted{color:var(--muted)}
+  .empty{text-align:center;color:var(--muted);padding:26px 14px;font-weight:600}
+  .empty .big{font-size:40px;display:block;margin-bottom:8px}
+
+  /* Buttons */
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:800;font-size:15px;
+       padding:14px 18px;border-radius:16px;background:var(--ink);color:#fff;width:100%;box-shadow:var(--sh)}
+  .btn.grad{background:var(--g1)} .btn.grad2{background:var(--g2)} .btn.grad3{background:var(--g3)} .btn.grad4{background:var(--g4)}
+  .btn.ghost{background:#fff;color:var(--ink);border:2px solid var(--line);box-shadow:none}
+  .btn.sm{padding:10px 14px;font-size:14px;width:auto;border-radius:13px}
+  .btn:active{transform:scale(.98)}
+  .btnrow{display:flex;gap:10px}
+
+  /* Chips / players */
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{display:inline-flex;align-items:center;gap:7px;background:#fff;border:2px solid var(--line);border-radius:999px;padding:6px 12px 6px 6px;font-weight:800;font-size:14px}
+  .chip.sel{border-color:var(--purple);background:#F1EFFE;color:var(--purple)}
+  .chip.a.sel{border-color:var(--blue);background:#EAF1FF;color:var(--blue)}
+  .chip.b.sel{border-color:var(--coral);background:#FFECEC;color:var(--coral)}
+  .chip .x{color:var(--muted);font-weight:900;margin-left:2px}
+
+  .plist{display:flex;flex-direction:column;gap:2px}
+  .prow{display:flex;align-items:center;gap:12px;padding:10px 4px;border-bottom:1px solid var(--line)}
+  .prow:last-child{border-bottom:none}
+  .prow .nm{font-weight:800;flex:1}
+  .prow .meta{font-size:12px;color:var(--muted);font-weight:700}
+  .rankno{width:30px;text-align:center;font-weight:900;font-size:16px;color:var(--muted)}
+  .rankno.m1{color:var(--gold)} .rankno.m2{color:#9AA7B5} .rankno.m3{color:#C98A4B}
+  .val{font-weight:900;font-size:16px}
+  .valsub{font-size:11px;color:var(--muted);font-weight:700;text-align:right}
+
+  .badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:900;padding:4px 9px;border-radius:999px;text-transform:uppercase;letter-spacing:.5px}
+  .badge.amer{background:#E7F7EF;color:var(--teal)}
+  .badge.klas{background:#EAF1FF;color:var(--blue)}
+  .badge.open{background:#E7F7EF;color:var(--teal)}
+  .badge.live{background:#FFECEC;color:var(--coral)}
+  .badge.done{background:#F0F1F5;color:var(--muted)}
+
+  /* Party card */
+  .party{background:var(--card);border-radius:20px;box-shadow:var(--sh);padding:15px;margin-bottom:12px}
+  .party .ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+  .party .pname{font-weight:900;font-size:17px}
+  .avstack{display:flex}
+  .avstack .av{margin-left:-8px;border:2px solid #fff}
+  .avstack .av:first-child{margin-left:0}
+  .code{font-family:ui-monospace,Menlo,monospace;font-weight:900;letter-spacing:2px;background:#F0F1F5;padding:3px 8px;border-radius:8px;font-size:13px}
+
+  /* Segmented */
+  .seg{display:flex;background:#EDEEF4;border-radius:14px;padding:4px;gap:4px}
+  .seg button{flex:1;padding:10px;border-radius:11px;font-weight:800;font-size:13px;color:var(--muted)}
+  .seg button.on{background:#fff;color:var(--ink);box-shadow:0 2px 8px rgba(0,0,0,.08)}
+  .segwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -16px;padding:0 16px}
+  .seg.scroll{min-width:max-content}
+  .seg.scroll button{flex:0 0 auto;padding:9px 14px;white-space:nowrap}
+
+  /* Score board */
+  .sb{display:flex;align-items:center;gap:10px}
+  .sb .side{flex:1;text-align:center}
+  .sb .team{font-weight:800;font-size:13px;color:var(--muted);margin-bottom:6px;min-height:32px;display:flex;align-items:center;justify-content:center;gap:4px;flex-wrap:wrap}
+  .sb .sc{font-size:44px;font-weight:900;line-height:1;letter-spacing:-1px}
+  .sb .vs{font-weight:900;color:var(--muted);font-size:14px}
+  .stepper{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:8px}
+  .stepper button{width:38px;height:38px;border-radius:50%;background:#F0F1F5;font-size:22px;font-weight:900;color:var(--ink);display:flex;align-items:center;justify-content:center}
+  .win{color:var(--teal)}
+
+  /* Inputs */
+  .field{margin-bottom:14px}
+  .field label{display:block;font-weight:800;font-size:13px;margin-bottom:7px;color:var(--ink)}
+  .field input,.field select{width:100%;padding:14px;border-radius:14px;border:2px solid var(--line);background:#FBFBFD;outline:none}
+  .field input:focus,.field select:focus{border-color:var(--purple)}
+  .emojigrid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
+  .emojigrid button{aspect-ratio:1;border-radius:14px;font-size:22px;background:#F6F6FA;border:2px solid transparent;display:flex;align-items:center;justify-content:center}
+  .emojigrid button.on{border-color:var(--purple);background:#F1EFFE;transform:scale(1.05)}
+  .colorgrid{display:flex;gap:10px;flex-wrap:wrap}
+  .colorgrid button{width:38px;height:38px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 2px transparent}
+  .colorgrid button.on{box-shadow:0 0 0 3px var(--ink)}
+
+  /* Stat tiles */
+  .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .tile{background:var(--card);border-radius:18px;box-shadow:var(--sh);padding:14px 8px;text-align:center}
+  .tile .n{font-size:24px;font-weight:900;letter-spacing:-.5px}
+  .tile .l{font-size:11px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+
+  /* Nav */
+  .nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:520px;
+       background:rgba(255,255,255,.92);backdrop-filter:blur(14px);border-top:1px solid var(--line);
+       display:flex;justify-content:space-around;padding:8px 6px calc(8px + env(safe-area-inset-bottom));z-index:50}
+  .nav button{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;color:var(--muted);font-weight:800;font-size:10.5px}
+  .nav button .ic{font-size:22px;line-height:1;filter:grayscale(1);opacity:.55}
+  .nav button.on{color:var(--purple)}
+  .nav button.on .ic{filter:none;opacity:1;transform:translateY(-1px)}
+
+  /* Modal */
+  .ov{position:fixed;inset:0;background:rgba(20,22,28,.5);z-index:100;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .18s}
+  .ov.show{opacity:1;pointer-events:auto}
+  .sheet{background:var(--bg);width:100%;max-width:520px;border-radius:26px 26px 0 0;padding:20px 16px calc(24px + env(safe-area-inset-bottom));max-height:92vh;overflow-y:auto;transform:translateY(20px);transition:transform .2s}
+  .ov.show .sheet{transform:translateY(0)}
+  .grip{width:44px;height:5px;border-radius:3px;background:#D5D7E0;margin:0 auto 14px}
+  .sheet h2{font-size:20px;font-weight:900;margin-bottom:4px}
+  .sheet .sh-sub{color:var(--muted);font-weight:600;font-size:14px;margin-bottom:16px}
+
+  /* Toast */
+  .toast{position:fixed;bottom:108px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;
+         padding:12px 20px;border-radius:14px;font-weight:800;font-size:14px;z-index:200;opacity:0;transition:.25s;box-shadow:var(--sh2);white-space:nowrap}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  .match{background:#fff;border-radius:16px;box-shadow:var(--sh);padding:12px;margin-bottom:10px}
+  .match .mt{display:flex;align-items:center;gap:8px}
+  .match .team{flex:1;font-weight:800;font-size:13px}
+  .match .team.r{text-align:right}
+  .match input{width:46px;text-align:center;padding:8px 4px;border-radius:10px;border:2px solid var(--line);font-weight:900;font-size:17px}
+  .roundlbl{font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin:16px 2px 8px}
+
+  .selhint{font-size:12px;font-weight:800;color:var(--muted);margin-bottom:6px}
+  .fade{animation:fade .3s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+  <div id="root"></div>
+  <div id="nav"></div>
+  <div class="ov" id="ov"><div class="sheet" id="sheet"></div></div>
+  <div class="toast" id="toast"></div>
+
+<script>
+/* ============================ STATE ============================ */
+const API='';
+let token=localStorage.getItem('pp_token')||null;
+let S={players:[],games:[],parties:[],tournaments:[],meId:null};
+const uid=p=>(p||'id')+Math.random().toString(36).slice(2,9);
+const now=()=>Date.now();
+let ui={tab:'home',playMode:'americano',playFormat:'2v2',selA:[],selB:[],scA:0,scB:0,rankTab:'elo',partyCtx:null,curTour:null};
+let busy=false;
+
+async function api(path,method,bodyObj){
+  const r=await fetch(API+path,{method:method||'GET',
+    headers:{'Content-Type':'application/json',...(token?{'Authorization':'Bearer '+token}:{})},
+    body:bodyObj?JSON.stringify(bodyObj):undefined});
+  let j={}; try{ j=await r.json(); }catch(e){}
+  if(r.status===401 && path!=='/api/login'){ token=null; localStorage.removeItem('pp_token'); renderAuth(); renderNav(); throw new Error(j.error||'unauth'); }
+  if(!r.ok) throw new Error(j.error||'Błąd serwera');
+  return j;
+}
+async function mutate(type,payload){
+  if(busy)return; busy=true;
+  try{ const r=await api('/api/mutate','POST',{type,payload}); S=r.data; S.meId=r.meId; }
+  catch(e){ toast(e.message||'Błąd'); }
+  finally{ busy=false; }
+  render();
+}
+async function boot(){
+  if(!token){ renderAuth(); renderNav(); return; }
+  try{ const r=await api('/api/state'); S=r.data; S.meId=r.meId; ui.tab='home'; render(); handleHash(); }
+  catch(e){ renderAuth(); renderNav(); }
+}
+
+const COLORS=['#6C5CE7','#2D6CFF','#12B886','#FF5A5F','#FF9F1A','#FF4D8D','#66D01A','#00B8D9'];
+const EMOJIS=['🎾','🔥','⚡','🦁','🐺','🦊','🦈','🐉','🚀','👑','💎','🎯','🏆','🥊','🌟','🍕','🦖','🐼','🦅','🎸','🤠'];
+
+/* ============================ HELPERS ============================ */
+const pget=id=>S.players.find(p=>p.id===id);
+const me=()=>pget(S.meId);
+const esc=s=>(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function avatar(p,cls){ if(!p) return ''; return `<div class="av ${cls||''}" style="background:${p.color}22;color:${p.color}">${p.emoji}</div>`; }
+function names(ids){ return ids.map(id=>{const p=pget(id);return p?p.name:'?';}).join(' + '); }
+function avStack(ids,cls){ return `<div class="avstack">${ids.map(id=>avatar(pget(id),(cls||'')+' sm')).join('')}</div>`; }
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),1900); }
+function timeAgo(ts){ const s=(now()-ts)/1000; if(s<60)return 'przed chwilą'; if(s<3600)return Math.floor(s/60)+' min temu'; if(s<86400)return Math.floor(s/3600)+' godz temu'; return Math.floor(s/86400)+' dni temu'; }
+function shortCode(){ let c=''; for(let i=0;i<5;i++)c+='ABCDEFGHJKMNPQRSTUVWXYZ23456789'[Math.floor(Math.random()*30)]; return c; }
+
+/* ============================ STATS / RANKINGS ============================ */
+function computeStats(){
+  const st={};
+  S.players.forEach(p=>st[p.id]={id:p.id,elo:1000,wins:0,losses:0,draws:0,played:0,points:0,amerPts:0,cur:0,best:0});
+  const gs=[...S.games].sort((a,b)=>a.ts-b.ts);
+  gs.forEach(g=>{
+    const A=g.aIds,B=g.bIds; if(!A.length||!B.length)return;
+    A.concat(B).forEach(id=>{ if(!st[id])st[id]={id,elo:1000,wins:0,losses:0,draws:0,played:0,points:0,amerPts:0,cur:0,best:0}; });
+    const eA=A.reduce((s,i)=>s+st[i].elo,0)/A.length, eB=B.reduce((s,i)=>s+st[i].elo,0)/B.length;
+    const expA=1/(1+Math.pow(10,(eB-eA)/400));
+    const rA=g.aScore>g.bScore?1:(g.aScore<g.bScore?0:.5);
+    const K=32;
+    A.forEach(i=>st[i].elo+=K*(rA-expA));
+    B.forEach(i=>st[i].elo+=K*((1-rA)-(1-expA)));
+    A.forEach(i=>{ st[i].played++; st[i].points+=g.aScore; if(g.mode==='americano')st[i].amerPts+=g.aScore; });
+    B.forEach(i=>{ st[i].played++; st[i].points+=g.bScore; if(g.mode==='americano')st[i].amerPts+=g.bScore; });
+    if(rA===1){ A.forEach(i=>{st[i].wins++;st[i].cur++;st[i].best=Math.max(st[i].best,st[i].cur);}); B.forEach(i=>{st[i].losses++;st[i].cur=0;}); }
+    else if(rA===0){ B.forEach(i=>{st[i].wins++;st[i].cur++;st[i].best=Math.max(st[i].best,st[i].cur);}); A.forEach(i=>{st[i].losses++;st[i].cur=0;}); }
+    else { A.concat(B).forEach(i=>st[i].draws++); }
+  });
+  Object.values(st).forEach(s=>{ s.elo=Math.round(s.elo); s.wr=s.played?Math.round(s.wins/s.played*100):0; });
+  return st;
+}
+const RANKS={
+  elo:{name:'Ranking Generalny',emoji:'🏆',desc:'Ogólny poziom (ELO)',key:s=>s.elo,fmt:s=>s.elo,sub:s=>`${s.wins}W ${s.losses}L`},
+  wins:{name:'Zwycięzcy',emoji:'🔥',desc:'Najwięcej wygranych',key:s=>s.wins,fmt:s=>s.wins+' W',sub:s=>`${s.wr}% skuteczności`},
+  amer:{name:'Król Americano',emoji:'🎯',desc:'Punkty zdobyte w Americano',key:s=>s.amerPts,fmt:s=>s.amerPts+' pkt',sub:s=>`${s.played} gier`},
+  streak:{name:'Na fali',emoji:'⚡',desc:'Aktualna passa zwycięstw',key:s=>s.cur,fmt:s=>s.cur+' 🔥',sub:s=>`rekord: ${s.best}`},
+  active:{name:'Maszyny',emoji:'🏓',desc:'Najwięcej rozegranych gier',key:s=>s.played,fmt:s=>s.played,sub:s=>`${s.wins}W ${s.losses}L`},
+};
+
+/* ============================ RENDER: shell ============================ */
+function render(){
+  if(!token){ renderAuth(); renderNav(); return; }
+  const v={home:viewHome,play:viewPlay,rankings:viewRankings,tournaments:viewTournaments,profile:viewProfile}[ui.tab];
+  document.getElementById('root').innerHTML=v();
+  renderNav();
+}
+function renderNav(){
+  if(!token){ document.getElementById('nav').innerHTML=''; return; }
+  const items=[['home','🏠','Party'],['play','🎾','Gramy'],['rankings','📊','Rankingi'],['tournaments','🏆','Turnieje'],['profile','👤','Ja']];
+  document.getElementById('nav').innerHTML=`<div class="nav">${items.map(([k,i,l])=>
+    `<button data-act="nav" data-v="${k}" class="${ui.tab===k?'on':''}"><span class="ic">${i}</span>${l}</button>`).join('')}</div>`;
+}
+
+/* ============================ AUTH (konta) ============================ */
+let onb={mode:'register',emoji:'🎾',color:'#6C5CE7'};
+function renderAuth(){
+  const reg=onb.mode==='register';
+  document.getElementById('root').innerHTML=`
+  <div class="hero h-home" style="border-radius:0 0 28px 28px">
+    <div class="blob"></div><div class="blob2"></div>
+    <div style="position:relative;z-index:2">
+      <div class="kick">🎾 padel z ekipą</div>
+      <h1>PadelParty</h1>
+      <div class="sub">${reg?'Załóż konto — bez maili, sama ksywa i hasło.':'Zaloguj się i graj dalej.'}</div>
+    </div>
+  </div>
+  <div class="app fade">
+    <section class="seg" style="margin-top:20px">
+      <button class="${reg?'on':''}" data-act="authMode" data-m="register">✨ Rejestracja</button>
+      <button class="${!reg?'on':''}" data-act="authMode" data-m="login">🔑 Logowanie</button>
+    </section>
+    <section class="card">
+      <div class="field"><label>Ksywa (login)</label>
+        <input id="auName" placeholder="np. kuba" maxlength="16" autocomplete="username" autocapitalize="none"/></div>
+      <div class="field"><label>Hasło</label>
+        <input id="auPass" type="password" placeholder="min. 3 znaki" autocomplete="${reg?'new-password':'current-password'}"/></div>
+      ${reg?`
+      <div class="field"><label>Wybierz avatar</label>
+        <div class="emojigrid" id="onbEmoji">${EMOJIS.map(e=>`<button data-act="onbE" data-e="${e}" class="${onb.emoji===e?'on':''}">${e}</button>`).join('')}</div></div>
+      <div class="field"><label>Kolor</label>
+        <div class="colorgrid">${COLORS.map(c=>`<button data-act="onbC" data-c="${c}" style="background:${c}" class="${onb.color===c?'on':''}"></button>`).join('')}</div></div>
+      <button class="btn grad" data-act="doRegister">Zakładam konto 🎾</button>`
+      :`<button class="btn grad" data-act="doLogin">Wchodzę 🎾</button>`}
+    </section>
+    <p class="muted" style="text-align:center;font-size:12px;font-weight:600;margin-top:4px">Konto = wspólne rankingi z ekipą. Logujesz się z każdego urządzenia.</p>
+  </div>`;
+}
+
+/* ============================ HOME / PARTY ============================ */
+function viewHome(){
+  const m=me();
+  const active=S.parties.filter(p=>p.status!=='done').sort((a,b)=>b.createdAt-a.createdAt);
+  const recent=[...S.games].sort((a,b)=>b.ts-a.ts).slice(0,4);
+  const st=computeStats(); const mine=st[S.meId]||{};
+  return `
+  <div class="hero h-home">
+    <div class="blob"></div><div class="blob2"></div>
+    <div class="heroTop">
+      <div><div class="kick">Cześć ${esc(m.name)} 👋</div><h1>Gramy dziś?</h1></div>
+      ${avatar(m,'lg')}
+    </div>
+    <div style="display:flex;gap:10px;margin-top:16px;position:relative;z-index:2">
+      <div style="flex:1;background:rgba(255,255,255,.18);border-radius:16px;padding:10px 12px">
+        <div style="font-size:22px;font-weight:900">${mine.elo||1000}</div><div style="font-size:11px;font-weight:800;opacity:.9">ELO</div></div>
+      <div style="flex:1;background:rgba(255,255,255,.18);border-radius:16px;padding:10px 12px">
+        <div style="font-size:22px;font-weight:900">${mine.wins||0}</div><div style="font-size:11px;font-weight:800;opacity:.9">Wygrane</div></div>
+      <div style="flex:1;background:rgba(255,255,255,.18);border-radius:16px;padding:10px 12px">
+        <div style="font-size:22px;font-weight:900">${mine.cur||0}🔥</div><div style="font-size:11px;font-weight:800;opacity:.9">Passa</div></div>
+    </div>
+  </div>
+  <div class="app">
+    <section>
+      <div class="btnrow">
+        <button class="btn grad" data-act="newParty">➕ Nowe party</button>
+        <button class="btn ghost" data-act="joinParty" style="flex:0 0 auto;width:auto;padding:14px 18px">🔗 Kod</button>
+      </div>
+    </section>
+
+    <section>
+      <div class="rowlbl"><h3>🎉 Aktywne party</h3></div>
+      ${active.length? active.map(partyCard).join('') : `<div class="card empty"><span class="big">🍹</span>Brak aktywnych party.<br/>Stwórz jedno i zaproś ekipę!</div>`}
+    </section>
+
+    <section>
+      <div class="rowlbl"><h3>⏱️ Ostatnie gierki</h3>${S.games.length?`<span class="lnk" data-act="nav" data-v="rankings">rankingi →</span>`:''}</div>
+      ${recent.length? recent.map(gameRow).join('') : `<div class="card empty"><span class="big">🎾</span>Jeszcze nikt nie grał.<br/>Rozegraj pierwszą gierkę w „Gramy".</div>`}
+    </section>
+  </div>`;
+}
+function partyCard(p){
+  const st={open:'open',playing:'live'}[p.status]||'done';
+  const lbl={open:'OTWARTE',playing:'GRAMY',done:'ZAMKNIĘTE'}[p.status];
+  return `<div class="party">
+    <div class="ph">
+      <div><div class="pname">${esc(p.name)}</div>
+        <div class="muted" style="font-size:12px;font-weight:700;margin-top:2px">kod: <span class="code">${p.code}</span> · ${p.memberIds.length} os.</div></div>
+      <span class="badge ${st}">${lbl}</span>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      ${avStack(p.memberIds)}
+      <span class="badge ${p.mode==='americano'?'amer':'klas'}">${p.mode==='americano'?'🎯 Americano':'🎾 Klasyk'}</span>
+    </div>
+    <div class="btnrow">
+      <button class="btn grad3 sm" style="flex:1" data-act="partyPlay" data-id="${p.id}">🎾 Zagraj</button>
+      <button class="btn ghost sm" data-act="partyOpen" data-id="${p.id}">⚙️</button>
+      <button class="btn ghost sm" data-act="partyInvite" data-id="${p.id}">🔗</button>
+    </div>
+  </div>`;
+}
+function gameRow(g){
+  const aw=g.aScore>g.bScore, bw=g.bScore>g.aScore;
+  return `<div class="card" style="padding:13px 15px">
+    <div style="display:flex;align-items:center;gap:10px">
+      <span class="badge ${g.mode==='americano'?'amer':'klas'}">${g.mode==='americano'?'🎯':'🎾'}</span>
+      <div style="flex:1;font-weight:800;font-size:14px" class="${aw?'win':''}">${esc(names(g.aIds))}</div>
+      <div style="font-weight:900;font-size:17px">${g.aScore}<span class="muted" style="font-weight:700"> : </span>${g.bScore}</div>
+      <div style="flex:1;text-align:right;font-weight:800;font-size:14px" class="${bw?'win':''}">${esc(names(g.bIds))}</div>
+    </div>
+    <div class="muted" style="font-size:11px;font-weight:700;margin-top:6px;text-align:center">${timeAgo(g.ts)}${g.tournamentId?' · 🏆 turniej':''}</div>
+  </div>`;
+}
+
+/* ============================ PLAY ============================ */
+function viewPlay(){
+  const roster=S.players;
+  const chip=(p,team)=>{
+    const sel=(team==='a'?ui.selA:ui.selB).includes(p.id);
+    return `<button class="chip ${team} ${sel?'sel':''}" data-act="selPlayer" data-team="${team}" data-id="${p.id}">${avatar(p,'sm')}${esc(p.name)}</button>`;
+  };
+  const cap=ui.playFormat==='2v2'?2:1;
+  const target=ui.playMode==='americano'?21:6;
+  return `
+  <div class="hero h-play">
+    <div class="blob"></div><div class="blob2"></div>
+    <div class="heroTop"><div><div class="kick">Rozegraj gierkę</div><h1>Zapisz wynik 🎾</h1></div></div>
+  </div>
+  <div class="app fade">
+    <section>
+      <div class="segwrap"><div class="seg">
+        <button class="${ui.playMode==='americano'?'on':''}" data-act="pMode" data-m="americano">🎯 Americano (do 21)</button>
+        <button class="${ui.playMode==='klasyk'?'on':''}" data-act="pMode" data-m="klasyk">🎾 Klasyk (sety)</button>
+      </div></div>
+    </section>
+    <section>
+      <div class="seg">
+        <button class="${ui.playFormat==='2v2'?'on':''}" data-act="pFmt" data-f="2v2">👥 Debel 2v2</button>
+        <button class="${ui.playFormat==='1v1'?'on':''}" data-act="pFmt" data-f="1v1">🧍 Singiel 1v1</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="selhint" style="color:var(--blue)">DRUŻYNA A ${ui.selA.length}/${cap}</div>
+      <div class="chips">${roster.map(p=>chip(p,'a')).join('')||'<span class="muted">Brak graczy — dodaj w profilu.</span>'}</div>
+      <div style="height:14px"></div>
+      <div class="selhint" style="color:var(--coral)">DRUŻYNA B ${ui.selB.length}/${cap}</div>
+      <div class="chips">${roster.map(p=>chip(p,'b')).join('')}</div>
+    </section>
+
+    <section class="card">
+      <div class="sb">
+        <div class="side">
+          <div class="team" style="color:var(--blue)">${ui.selA.length?esc(names(ui.selA)):'Drużyna A'}</div>
+          <div class="sc ${ui.scA>ui.scB?'win':''}">${ui.scA}</div>
+          <div class="stepper"><button data-act="sc" data-t="a" data-d="-1">−</button><button data-act="sc" data-t="a" data-d="1">+</button></div>
+        </div>
+        <div class="vs">VS</div>
+        <div class="side">
+          <div class="team" style="color:var(--coral)">${ui.selB.length?esc(names(ui.selB)):'Drużyna B'}</div>
+          <div class="sc ${ui.scB>ui.scA?'win':''}">${ui.scB}</div>
+          <div class="stepper"><button data-act="sc" data-t="b" data-d="-1">−</button><button data-act="sc" data-t="b" data-d="1">+</button></div>
+        </div>
+      </div>
+      <div class="muted" style="text-align:center;font-size:12px;font-weight:700;margin-top:12px">
+        ${ui.playMode==='americano'?'🎯 Gramy do 21 pkt włącznie':'🎾 Wpisz zdobyte gemy/sety'} · cel ${target}
+      </div>
+    </section>
+
+    <section><button class="btn grad3" data-act="saveGame">💾 Zapisz gierkę</button></section>
+  </div>`;
+}
+
+/* ============================ RANKINGS ============================ */
+function viewRankings(){
+  const st=computeStats();
+  const r=RANKS[ui.rankTab];
+  const rows=Object.values(st).filter(s=>s.played>0||ui.rankTab==='elo')
+    .sort((a,b)=>r.key(b)-r.key(a)||b.elo-a.elo);
+  const podium=rows.slice(0,3);
+  return `
+  <div class="hero h-rank">
+    <div class="blob"></div><div class="blob2"></div>
+    <div class="heroTop"><div><div class="kick">${r.emoji} ${r.desc}</div><h1>${r.name}</h1></div></div>
+  </div>
+  <div class="app fade">
+    <section class="segwrap"><div class="seg scroll">
+      ${Object.entries(RANKS).map(([k,v])=>`<button class="${ui.rankTab===k?'on':''}" data-act="rankTab" data-k="${k}">${v.emoji} ${v.name}</button>`).join('')}
+    </div></section>
+    ${rows.length===0?`<div class="card empty"><span class="big">📊</span>Brak danych. Rozegraj gierki, żeby zbudować ranking!</div>`:`
+    ${podium.length>=1?podiumHTML(podium,r):''}
+    <section class="card" style="padding:6px 15px">
+      <div class="plist">
+      ${rows.map((s,i)=>{const p=pget(s.id);return `
+        <div class="prow">
+          <div class="rankno ${i<3?'m'+(i+1):''}">${i<3?['🥇','🥈','🥉'][i]:i+1}</div>
+          ${avatar(p)}
+          <div style="flex:1"><div class="nm">${esc(p.name)}${s.id===S.meId?' <span style="color:var(--purple)">· ty</span>':''}</div>
+            <div class="meta">${r.sub(s)}</div></div>
+          <div style="text-align:right"><div class="val" style="color:${i===0?'var(--gold)':'var(--ink)'}">${r.fmt(s)}</div></div>
+        </div>`;}).join('')}
+      </div>
+    </section>`}
+  </div>`;
+}
+function podiumHTML(pod,r){
+  const order=[1,0,2].filter(i=>pod[i]);
+  const h=[90,68,54]; const medal=['🥇','🥈','🥉'];
+  return `<section class="card" style="background:var(--g4);padding:18px 12px 12px">
+    <div style="display:flex;align-items:flex-end;justify-content:center;gap:12px">
+    ${order.map(i=>{const s=pod[i];const p=pget(s.id);return `
+      <div style="flex:1;text-align:center;color:#fff">
+        <div style="margin:0 auto 6px;width:fit-content">${avatar(p,'lg')}</div>
+        <div style="font-weight:900;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(p.name)}</div>
+        <div style="font-size:12px;font-weight:800;opacity:.9">${r.fmt(s)}</div>
+        <div style="background:rgba(255,255,255,.25);border-radius:12px 12px 0 0;height:${h[i]}px;display:flex;align-items:flex-start;justify-content:center;padding-top:6px;font-size:22px;margin-top:6px;font-weight:900">${medal[i]}</div>
+      </div>`;}).join('')}
+    </div></section>`;
+}
+
+/* ============================ TOURNAMENTS ============================ */
+function viewTournaments(){
+  const ts=[...S.tournaments].sort((a,b)=>b.createdAt-a.createdAt);
+  return `
+  <div class="hero h-tour">
+    <div class="blob"></div><div class="blob2"></div>
+    <div class="heroTop"><div><div class="kick">Rywalizacja</div><h1>Turnieje 🏆</h1></div></div>
+  </div>
+  <div class="app fade">
+    <section><button class="btn grad2" data-act="newTour">➕ Nowy turniej</button></section>
+    ${ts.length? ts.map(tourCard).join('') : `<div class="card empty"><span class="big">🏆</span>Brak turniejów.<br/>Odpal cotygodniowe Americano dla ekipy!</div>`}
+  </div>`;
+}
+function tourCard(t){
+  const scored=t.matches.filter(m=>m.done).length;
+  const st={setup:'open',live:'live',done:'done'}[t.status];
+  const lbl={setup:'ZAPISY',live:'TRWA',done:'ZAKOŃCZONY'}[t.status];
+  let winner='';
+  if(t.status==='done'){ const s=tourStandings(t); if(s[0])winner=`🥇 ${pget(s[0].id)?.name||''}`; }
+  return `<div class="party" data-act="tourOpen" data-id="${t.id}" style="cursor:pointer">
+    <div class="ph">
+      <div><div class="pname">${esc(t.name)}</div>
+        <div class="muted" style="font-size:12px;font-weight:700;margin-top:2px">${t.weekly?'🔁 co tydzień · ':''}${t.format==='1v1'?'Singiel':'Debel'} Americano</div></div>
+      <span class="badge ${st}">${lbl}</span>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      ${avStack(t.playerIds)}
+      <div class="muted" style="font-size:12px;font-weight:800">${winner||`${scored}/${t.matches.length} meczów`}</div>
+    </div>
+  </div>`;
+}
+function tourStandings(t){
+  const st={}; t.playerIds.forEach(id=>st[id]={id,pts:0,wins:0,played:0});
+  t.matches.filter(m=>m.done).forEach(m=>{
+    m.aIds.forEach(i=>{if(st[i]){st[i].pts+=m.aScore;st[i].played++;}});
+    m.bIds.forEach(i=>{if(st[i]){st[i].pts+=m.bScore;st[i].played++;}});
+    if(m.aScore>m.bScore)m.aIds.forEach(i=>st[i]&&st[i].wins++);
+    else if(m.bScore>m.aScore)m.bIds.forEach(i=>st[i]&&st[i].wins++);
+  });
+  return Object.values(st).sort((a,b)=>b.pts-a.pts||b.wins-a.wins);
+}
+/* Americano schedule generator */
+function genSchedule(ids,format,rounds){
+  const M=[]; const n=ids.length;
+  if(format==='1v1'){
+    // round-robin circle method
+    let arr=[...ids]; if(n%2)arr.push(null);
+    const R=arr.length, half=R/2;
+    let rnd=arr.slice();
+    const maxR=Math.min(rounds||R-1,R-1);
+    for(let r=0;r<maxR;r++){
+      for(let i=0;i<half;i++){ const a=rnd[i],b=rnd[R-1-i]; if(a!=null&&b!=null)M.push({id:uid('m'),round:r+1,aIds:[a],bIds:[b],aScore:0,bScore:0,done:false}); }
+      rnd=[rnd[0],...rnd.slice(-1),...rnd.slice(1,-1)]; // rotate
+    }
+  } else {
+    // doubles americano: each round chunk shuffled players into groups of 4
+    const base=ids.filter((_,i)=>i<Math.floor(n/4)*4);
+    const R=rounds||Math.max(3,base.length-1);
+    for(let r=0;r<R;r++){
+      const sh=[...base].sort(()=>Math.random()-.5);
+      for(let i=0;i+3<sh.length;i+=4){
+        const g=[sh[i],sh[i+1],sh[i+2],sh[i+3]];
+        const [x,y,z,w]=[g[0],g[1],g[2],g[3]];
+        const pat=r%3; let A,B;
+        if(pat===0){A=[x,y];B=[z,w];} else if(pat===1){A=[x,z];B=[y,w];} else {A=[x,w];B=[y,z];}
+        M.push({id:uid('m'),round:r+1,aIds:A,bIds:B,aScore:0,bScore:0,done:false});
+      }
+    }
+  }
+  return M;
+}
+
+/* ============================ PROFILE ============================ */
+function viewProfile(){
+  const m=me(); const st=computeStats(); const mine=st[S.meId]||{};
+  const roster=S.players.filter(p=>p.id!==S.meId);
+  return `
+  <div class="hero h-me">
+    <div class="blob"></div><div class="blob2"></div>
+    <div class="heroTop"><div><div class="kick">Twój profil</div><h1>${esc(m.name)}</h1></div>${avatar(m,'lg')}</div>
+  </div>
+  <div class="app fade">
+    <section class="tiles">
+      <div class="tile"><div class="n">${mine.elo||1000}</div><div class="l">ELO</div></div>
+      <div class="tile"><div class="n">${mine.played||0}</div><div class="l">Gier</div></div>
+      <div class="tile"><div class="n">${mine.wr||0}%</div><div class="l">Skuteczność</div></div>
+      <div class="tile"><div class="n" style="color:var(--teal)">${mine.wins||0}</div><div class="l">Wygrane</div></div>
+      <div class="tile"><div class="n" style="color:var(--coral)">${mine.losses||0}</div><div class="l">Porażki</div></div>
+      <div class="tile"><div class="n" style="color:var(--amber)">${mine.best||0}🔥</div><div class="l">Rekord passy</div></div>
+    </section>
+
+    <section>
+      <div class="rowlbl"><h3>👥 Gracze (${S.players.length})</h3><span class="lnk" data-act="addPlayer">+ dodaj</span></div>
+      <div class="card" style="padding:6px 15px"><div class="plist">
+        <div class="prow">${avatar(m)}<div class="nm">${esc(m.name)} <span style="color:var(--purple)">· ty</span></div></div>
+        ${roster.map(p=>`<div class="prow">${avatar(p)}<div class="nm" style="flex:1">${esc(p.name)}</div>
+          <button class="btn ghost sm" data-act="delPlayer" data-id="${p.id}" style="padding:6px 12px">🗑️</button></div>`).join('')}
+      </div></div>
+    </section>
+
+    <section>
+      <div class="rowlbl"><h3>⚙️ Ustawienia</h3></div>
+      <div class="card">
+        <button class="btn ghost" data-act="demo" style="margin-bottom:10px">✨ Wygeneruj dane demo (ekipa + gierki)</button>
+        <button class="btn ghost" data-act="logout" style="margin-bottom:10px">🔑 Wyloguj się</button>
+        <button class="btn ghost" data-act="reset" style="color:var(--coral);border-color:#FFD9D9">🧹 Wyczyść gierki, party i turnieje</button>
+      </div>
+      <p class="muted" style="text-align:center;font-size:12px;margin-top:14px;font-weight:600">PadelParty · konto na serwerze, wspólne rankingi z ekipą 🎾</p>
+    </section>
+  </div>`;
+}
+
+/* ============================ MODALS ============================ */
+function openSheet(html){ document.getElementById('sheet').innerHTML=`<div class="grip"></div>`+html; document.getElementById('ov').classList.add('show'); }
+function closeSheet(){ document.getElementById('ov').classList.remove('show'); }
+
+let mNew={emoji:'🎾',color:'#6C5CE7'};
+function sheetNewParty(){
+  mNew={emoji:'🎉',color:'#6C5CE7'};
+  openSheet(`
+    <h2>🎉 Nowe party</h2>
+    <div class="sh-sub">Zbierz ekipę na dzisiejszą sesję.</div>
+    <div class="field"><label>Nazwa party</label><input id="npName" placeholder="np. Środowe Americano" maxlength="24"/></div>
+    <div class="field"><label>Domyślny tryb</label>
+      <div class="seg"><button class="on" id="npMA" data-act="npMode" data-m="americano">🎯 Americano</button>
+      <button id="npMK" data-act="npMode" data-m="klasyk">🎾 Klasyk</button></div></div>
+    <div class="field"><label>Kto gra? (klikaj)</label>
+      <div class="chips" id="npMembers">${S.players.map(p=>`<button class="chip ${p.id===S.meId?'sel':''}" data-act="npMem" data-id="${p.id}">${avatar(p,'sm')}${esc(p.name)}</button>`).join('')}</div>
+      <button class="btn ghost sm" data-act="addPlayer" style="margin-top:10px">+ Nowy gracz</button>
+    </div>
+    <button class="btn grad" data-act="createParty">Stwórz party 🚀</button>`);
+  npState={mode:'americano',members:new Set([S.meId])};
+}
+let npState={mode:'americano',members:new Set()};
+
+function sheetJoin(){
+  openSheet(`
+    <h2>🔗 Dołącz do party</h2>
+    <div class="sh-sub">Wpisz kod, który dostałeś od kumpla.</div>
+    <div class="field"><label>Kod party</label><input id="joinCode" placeholder="np. K7XQ2" maxlength="5" style="text-transform:uppercase;letter-spacing:4px;font-weight:900;text-align:center;font-size:22px"/></div>
+    <button class="btn grad" data-act="doJoin">Dołącz</button>
+    <p class="muted" style="font-size:12px;text-align:center;margin-top:12px;font-weight:600">Kod działa dla party na tym urządzeniu.<br/>Kumpel może Cię też po prostu dodać w „Kto gra".</p>`);
+}
+function sheetInvite(p){
+  const link=location.origin+location.pathname+'#join='+p.code;
+  openSheet(`
+    <h2>🔗 Zaproś do „${esc(p.name)}"</h2>
+    <div class="sh-sub">Wyślij kod albo link — kliknięcie otwiera party.</div>
+    <div class="card" style="text-align:center;padding:22px">
+      <div class="muted" style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:1px">Kod party</div>
+      <div style="font-size:44px;font-weight:900;letter-spacing:6px;margin:8px 0;color:var(--purple)">${p.code}</div>
+    </div>
+    <button class="btn grad" data-act="copy" data-txt="${link}" style="margin-top:14px">📋 Kopiuj link zaproszenia</button>
+    <button class="btn ghost" data-act="copy" data-txt="${p.code}" style="margin-top:10px">Kopiuj sam kod</button>`);
+}
+function sheetParty(p){
+  openSheet(`
+    <h2>⚙️ ${esc(p.name)}</h2>
+    <div class="sh-sub">${p.memberIds.length} graczy · kod ${p.code}</div>
+    <div class="field"><label>Gracze w party</label>
+      <div class="chips">${S.players.map(x=>{const inn=p.memberIds.includes(x.id);
+        return `<button class="chip ${inn?'sel':''}" data-act="ptMem" data-pid="${p.id}" data-id="${x.id}">${avatar(x,'sm')}${esc(x.name)}${inn?' <span class="x">✕</span>':''}</button>`;}).join('')}</div>
+      <button class="btn ghost sm" data-act="addPlayer" style="margin-top:10px">+ Nowy gracz</button>
+    </div>
+    <button class="btn grad3" data-act="partyPlay" data-id="${p.id}">🎾 Przejdź do gry</button>
+    <button class="btn ghost" data-act="closeParty" data-id="${p.id}" style="margin-top:10px;color:var(--coral);border-color:#FFD9D9">Zakończ party</button>`);
+}
+function sheetAddPlayer(){
+  mNew={emoji:EMOJIS[Math.floor(Math.random()*EMOJIS.length)],color:COLORS[Math.floor(Math.random()*COLORS.length)]};
+  openSheet(`
+    <h2>👤 Nowy gracz</h2>
+    <div class="sh-sub">Dodaj kumpla do ekipy (bez konta, od ręki).</div>
+    <div class="field"><label>Ksywa</label><input id="apName" placeholder="np. Franek" maxlength="16"/></div>
+    <div class="field"><label>Avatar</label><div class="emojigrid" id="apEmoji">${EMOJIS.map(e=>`<button data-act="apE" data-e="${e}" class="${mNew.emoji===e?'on':''}">${e}</button>`).join('')}</div></div>
+    <div class="field"><label>Kolor</label><div class="colorgrid">${COLORS.map(c=>`<button data-act="apC" data-c="${c}" style="background:${c}" class="${mNew.color===c?'on':''}"></button>`).join('')}</div></div>
+    <button class="btn grad" data-act="saveApPlayer">Dodaj gracza</button>`);
+}
+function sheetNewTour(){
+  tourNew={format:'2v2',weekly:true,rounds:4,players:new Set([S.meId])};
+  renderTourSheet();
+}
+let tourNew={format:'2v2',weekly:true,rounds:4,players:new Set()};
+function renderTourSheet(){
+  openSheet(`
+    <h2>🏆 Nowy turniej</h2>
+    <div class="sh-sub">Americano — partnerzy się rotują, liczą się punkty.</div>
+    <div class="field"><label>Nazwa</label><input id="tName" placeholder="np. Liga Środowa #4" maxlength="24" value="${tourNew.name?esc(tourNew.name):''}"/></div>
+    <div class="field"><label>Format</label>
+      <div class="seg"><button class="${tourNew.format==='2v2'?'on':''}" data-act="tFmt" data-f="2v2">👥 Debel 2v2</button>
+      <button class="${tourNew.format==='1v1'?'on':''}" data-act="tFmt" data-f="1v1">🧍 Singiel 1v1</button></div>
+      ${tourNew.format==='2v2'?'<div class="muted" style="font-size:12px;font-weight:700;margin-top:6px">Najlepiej 4/8/12 graczy.</div>':''}
+    </div>
+    <div class="field"><label>Liczba rund: <b id="tRlbl">${tourNew.rounds}</b></label>
+      <input type="range" min="2" max="10" value="${tourNew.rounds}" data-act="tRounds" style="width:100%"/></div>
+    <div class="field"><label>🔁 Cotygodniowy</label>
+      <div class="seg"><button class="${tourNew.weekly?'on':''}" data-act="tWeek" data-w="1">Tak, co tydzień</button>
+      <button class="${!tourNew.weekly?'on':''}" data-act="tWeek" data-w="0">Jednorazowy</button></div></div>
+    <div class="field"><label>Uczestnicy (${tourNew.players.size})</label>
+      <div class="chips">${S.players.map(p=>`<button class="chip ${tourNew.players.has(p.id)?'sel':''}" data-act="tPl" data-id="${p.id}">${avatar(p,'sm')}${esc(p.name)}</button>`).join('')}</div>
+      <button class="btn ghost sm" data-act="addPlayer" style="margin-top:10px">+ Nowy gracz</button>
+    </div>
+    <button class="btn grad2" data-act="createTour">Wygeneruj drabinkę 🎲</button>`);
+}
+function sheetTour(t){
+  const stand=tourStandings(t);
+  const rounds=[...new Set(t.matches.map(m=>m.round))].sort((a,b)=>a-b);
+  openSheet(`
+    <h2>🏆 ${esc(t.name)}</h2>
+    <div class="sh-sub">${t.format==='1v1'?'Singiel':'Debel'} Americano · ${t.playerIds.length} graczy${t.weekly?' · 🔁 co tydzień':''}</div>
+    <div class="rowlbl" style="margin-top:4px"><h3 style="font-size:15px">📊 Klasyfikacja</h3></div>
+    <div class="card" style="padding:6px 15px;margin-bottom:6px"><div class="plist">
+      ${stand.map((s,i)=>{const p=pget(s.id);return `<div class="prow">
+        <div class="rankno ${i<3?'m'+(i+1):''}">${i<3?['🥇','🥈','🥉'][i]:i+1}</div>${avatar(p,'sm')}
+        <div class="nm" style="flex:1">${esc(p?.name||'?')}</div>
+        <div style="text-align:right"><div class="val">${s.pts} pkt</div><div class="valsub">${s.wins}W · ${s.played} gier</div></div></div>`;}).join('')}
+    </div></div>
+    ${t.status!=='done'?`<div class="rowlbl" style="margin-top:14px"><h3 style="font-size:15px">🎾 Mecze — wpisz wyniki</h3></div>
+    ${rounds.map(r=>`<div class="roundlbl">Runda ${r}</div>${t.matches.filter(m=>m.round===r).map(m=>`
+      <div class="match"><div class="mt">
+        <div class="team">${esc(names(m.aIds))}</div>
+        <input type="number" id="ta_${m.id}" value="${m.aScore}" min="0" max="30"/>
+        <span class="muted" style="font-weight:900">:</span>
+        <input type="number" id="tb_${m.id}" value="${m.bScore}" min="0" max="30"/>
+        <div class="team r">${esc(names(m.bIds))}</div>
+      </div></div>`).join('')}`).join('')}
+    <button class="btn grad3" data-act="saveTourScores" data-id="${t.id}" style="margin-top:14px">💾 Zapisz wyniki</button>
+    <button class="btn ghost" data-act="finishTour" data-id="${t.id}" style="margin-top:10px">🏁 Zakończ turniej</button>
+    `:`<div class="card" style="text-align:center;background:var(--g5);color:#fff;margin-top:10px">
+        <div style="font-size:34px">🥇</div><div style="font-weight:900;font-size:18px">${esc(pget(stand[0]?.id)?.name||'—')}</div>
+        <div style="font-weight:700;opacity:.9">Zwycięzca · ${stand[0]?.pts||0} pkt</div></div>`}`);
+}
+
+/* ============================ ACTIONS ============================ */
+document.addEventListener('click',e=>{
+  const t=e.target.closest('[data-act]'); if(!t)return;
+  const a=t.dataset, act=a.act;
+  const P=id=>S.parties.find(x=>x.id===id);
+  switch(act){
+    /* auth */
+    case 'authMode': onb.mode=a.m; renderAuth(); break;
+    case 'onbE': onb.emoji=a.e; document.querySelectorAll('#onbEmoji button').forEach(b=>b.classList.toggle('on',b.dataset.e===a.e)); break;
+    case 'onbC': onb.color=a.c; t.parentNode.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.c===a.c)); break;
+    case 'doRegister':{
+      const username=(document.getElementById('auName').value||'').trim();
+      const password=document.getElementById('auPass').value||'';
+      const name=username||'Gracz';
+      (async()=>{ try{
+        const r=await api('/api/register','POST',{username,password,name,emoji:onb.emoji,color:onb.color});
+        token=r.token; localStorage.setItem('pp_token',token); S=r.data; S.meId=r.meId; ui.tab='home';
+        toast('Cześć '+name+'! 🎾'); render(); handleHash();
+      }catch(e){ toast(e.message||'Nie udało się'); } })();
+      break; }
+    case 'doLogin':{
+      const username=(document.getElementById('auName').value||'').trim();
+      const password=document.getElementById('auPass').value||'';
+      (async()=>{ try{
+        const r=await api('/api/login','POST',{username,password});
+        token=r.token; localStorage.setItem('pp_token',token); S=r.data; S.meId=r.meId; ui.tab='home';
+        toast('Siema! 🎾'); render(); handleHash();
+      }catch(e){ toast(e.message||'Błąd logowania'); } })();
+      break; }
+
+    /* nav */
+    case 'nav': ui.tab=a.v; render(); scrollTo(0,0); break;
+
+    /* party */
+    case 'newParty': sheetNewParty(); break;
+    case 'joinParty': sheetJoin(); break;
+    case 'npMode': npState.mode=a.m; document.getElementById('npMA').classList.toggle('on',a.m==='americano'); document.getElementById('npMK').classList.toggle('on',a.m==='klasyk'); break;
+    case 'npMem': { const id=a.id; npState.members.has(id)?npState.members.delete(id):npState.members.add(id); t.classList.toggle('sel'); break; }
+    case 'createParty':{
+      const nm=(document.getElementById('npName').value||'').trim()||'Party';
+      if(npState.members.size<1){toast('Wybierz graczy');break;}
+      closeSheet(); ui.tab='home'; toast('Party stworzone! 🎉');
+      mutate('addParty',{name:nm,mode:npState.mode,memberIds:[...npState.members]}); break; }
+    case 'partyInvite': sheetInvite(P(a.id)); break;
+    case 'partyOpen': sheetParty(P(a.id)); break;
+    case 'ptMem':{ const p=P(a.pid); const ids=p.memberIds.includes(a.id)?p.memberIds.filter(x=>x!==a.id):[...p.memberIds,a.id];
+      (async()=>{ await mutate('updateParty',{id:p.id,memberIds:ids}); const np=P(p.id); if(np)sheetParty(np); })(); break; }
+    case 'closeParty':{ closeSheet(); toast('Party zakończone'); mutate('updateParty',{id:a.id,status:'done'}); break; }
+    case 'partyPlay':{ const p=P(a.id); if(p){ ui.playMode=p.mode; ui.selA=[]; ui.selB=[]; ui.scA=0; ui.scB=0; ui.partyCtx=p.id; } closeSheet(); ui.tab='play';
+      mutate('updateParty',{id:a.id,status:'playing'}); scrollTo(0,0); break; }
+    case 'doJoin':{ const c=(document.getElementById('joinCode').value||'').trim().toUpperCase(); if(!c){toast('Wpisz kod');break;}
+      (async()=>{ try{ const r=await api('/api/mutate','POST',{type:'joinParty',payload:{code:c}}); S=r.data; S.meId=r.meId; closeSheet(); ui.tab='home'; toast('Dołączono! 🎉'); render(); }
+        catch(e){ toast(e.message||'Nie znaleziono kodu 🤔'); } })(); break; }
+    case 'copy': navigator.clipboard?.writeText(a.txt).then(()=>toast('Skopiowano! 📋')).catch(()=>toast(a.txt)); break;
+
+    /* play */
+    case 'pMode': ui.playMode=a.m; render(); break;
+    case 'pFmt': ui.playFormat=a.f; ui.selA=ui.selA.slice(0,a.f==='2v2'?2:1); ui.selB=ui.selB.slice(0,a.f==='2v2'?2:1); render(); break;
+    case 'selPlayer':{
+      const cap=ui.playFormat==='2v2'?2:1; const id=a.id; const team=a.team;
+      const mine=team==='a'?ui.selA:ui.selB, other=team==='a'?ui.selB:ui.selA;
+      const oi=other.indexOf(id); if(oi>=0)other.splice(oi,1);
+      const mi=mine.indexOf(id);
+      if(mi>=0)mine.splice(mi,1); else { if(mine.length>=cap)mine.shift(); mine.push(id); }
+      render(); break; }
+    case 'sc':{ const v=parseInt(a.d); if(a.t==='a')ui.scA=Math.max(0,ui.scA+v); else ui.scB=Math.max(0,ui.scB+v); render(); break; }
+    case 'saveGame':{
+      const cap=ui.playFormat==='2v2'?2:1;
+      if(ui.selA.length!==cap||ui.selB.length!==cap){toast('Wybierz graczy dla obu drużyn');break;}
+      if(ui.scA===ui.scB){toast('Wynik nie może być remisem 🤝');break;}
+      const w=ui.scA>ui.scB?names(ui.selA):names(ui.selB);
+      const payload={mode:ui.playMode,partyId:ui.partyCtx,aIds:[...ui.selA],bIds:[...ui.selB],aScore:ui.scA,bScore:ui.scB};
+      ui.scA=0; ui.scB=0; ui.selA=[]; ui.selB=[]; toast('Zapisane! 🏆 Wygrywa: '+w); scrollTo(0,0);
+      mutate('addGame',payload); break; }
+
+    /* rankings */
+    case 'rankTab': ui.rankTab=a.k; render(); break;
+
+    /* profile / players */
+    case 'addPlayer': sheetAddPlayer(); break;
+    case 'apE': mNew.emoji=a.e; document.querySelectorAll('#apEmoji button').forEach(b=>b.classList.toggle('on',b.dataset.e===a.e)); break;
+    case 'apC': mNew.color=a.c; t.parentNode.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.c===a.c)); break;
+    case 'saveApPlayer':{
+      const nm=(document.getElementById('apName').value||'').trim(); if(!nm){toast('Wpisz ksywę');break;}
+      closeSheet(); toast(nm+' w ekipie! 👊');
+      mutate('addPlayer',{name:nm,emoji:mNew.emoji,color:mNew.color}); break; }
+    case 'delPlayer':{ if(a.id===S.meId)break; toast('Usuwam gracza'); mutate('delPlayer',{id:a.id}); break; }
+    case 'demo': toast('Generuję dane demo ✨'); mutate('seedDemo'); break;
+    case 'reset': if(confirm('Wyczyścić gierki, party i turnieje? (konta zostają)')){ toast('Wyczyszczono'); mutate('reset'); } break;
+    case 'logout': if(confirm('Wylogować się?')){ (async()=>{ try{await api('/api/logout','POST');}catch(e){} token=null; localStorage.removeItem('pp_token'); ui.tab='home'; renderAuth(); renderNav(); })(); } break;
+
+    /* tournaments */
+    case 'newTour': sheetNewTour(); break;
+    case 'tFmt': tourNew.format=a.f; renderTourSheet(); break;
+    case 'tWeek': tourNew.weekly=a.w==='1'; renderTourSheet(); break;
+    case 'tPl':{ const id=a.id; tourNew.players.has(id)?tourNew.players.delete(id):tourNew.players.add(id); const nm=document.getElementById('tName').value; tourNew.name=nm; renderTourSheet(); break; }
+    case 'createTour':{
+      const nm=(document.getElementById('tName').value||'').trim()||'Turniej Americano';
+      const ids=[...tourNew.players]; const min=tourNew.format==='2v2'?4:2;
+      if(ids.length<min){toast('Potrzeba min. '+min+' graczy');break;}
+      const matches=genSchedule(ids,tourNew.format,tourNew.rounds);
+      if(!matches.length){toast('Za mało graczy na ten format');break;}
+      closeSheet(); ui.tab='tournaments'; toast('Turniej gotowy! 🎲 '+matches.length+' meczów');
+      mutate('addTournament',{name:nm,format:tourNew.format,weekly:tourNew.weekly,rounds:tourNew.rounds,playerIds:ids,matches}); break; }
+    case 'tourOpen':{ const to=S.tournaments.find(x=>x.id===a.id); if(to)sheetTour(to); break; }
+    case 'saveTourScores':{
+      const to=S.tournaments.find(x=>x.id===a.id); if(!to)break;
+      const matches=to.matches.map(m=>{ const av=parseInt(document.getElementById('ta_'+m.id).value)||0, bv=parseInt(document.getElementById('tb_'+m.id).value)||0;
+        return {...m,aScore:av,bScore:bv,done:(av+bv)>0}; });
+      toast('Wyniki zapisane 💾');
+      (async()=>{ await mutate('updateTournament',{id:to.id,matches}); const nt=S.tournaments.find(x=>x.id===to.id); if(nt)sheetTour(nt); })(); break; }
+    case 'finishTour':{ closeSheet(); toast('🏁 Turniej zakończony!'); mutate('updateTournament',{id:a.id,status:'done'}); break; }
+
+    /* modal */
+    case 'closeSheet': closeSheet(); break;
+  }
+});
+document.getElementById('ov').addEventListener('click',e=>{ if(e.target.id==='ov')closeSheet(); });
+document.addEventListener('input',e=>{ const t=e.target.closest('[data-act]'); if(!t)return;
+  if(t.dataset.act==='tRounds'){ tourNew.rounds=parseInt(t.value); document.getElementById('tRlbl').textContent=tourNew.rounds; }
+});
+
+/* mirror tournament matches into global games so they count in rankings */
+function syncTourGames(t){
+  S.games=S.games.filter(g=>g.tournamentId!==t.id);
+  let i=0;
+  t.matches.filter(m=>m.done&&m.aScore!==m.bScore).forEach(m=>{
+    S.games.push({id:uid('g'),ts:t.createdAt+(++i),mode:'americano',tournamentId:t.id,partyId:null,aIds:m.aIds,bIds:m.bIds,aScore:m.aScore,bScore:m.bScore});
+  });
+}
+
+/* ============================ DEMO DATA ============================ */
+function seedDemo(){
+  const demo=[['Kuba','🦁','#FF9F1A'],['Ola','🦊','#FF4D8D'],['Michał','🦈','#2D6CFF'],['Zosia','⚡','#12B886'],['Bartek','🐉','#6C5CE7'],['Ewa','👑','#FF5A5F'],['Piotr','🚀','#66D01A']];
+  const added=[];
+  demo.forEach(([n,e,c])=>{ if(!S.players.some(p=>p.name===n)){ const p={id:uid('p'),name:n,emoji:e,color:c}; S.players.push(p); added.push(p.id);} });
+  const pool=S.players.map(p=>p.id);
+  const rnd=arr=>arr[Math.floor(Math.random()*arr.length)];
+  for(let i=0;i<24;i++){
+    const sh=[...pool].sort(()=>Math.random()-.5);
+    const dbl=Math.random()>.4 && pool.length>=4;
+    const A=dbl?[sh[0],sh[1]]:[sh[0]], B=dbl?[sh[2],sh[3]]:[sh[1]];
+    const amer=Math.random()>.35;
+    let sa,sb;
+    if(amer){ if(Math.random()>.5){sa=21;sb=Math.floor(Math.random()*20);} else {sb=21;sa=Math.floor(Math.random()*20);} }
+    else { if(Math.random()>.5){sa=6;sb=Math.floor(Math.random()*6);} else {sb=6;sa=Math.floor(Math.random()*6);} }
+    S.games.push({id:uid('g'),ts:now()-(24-i)*3600000,mode:amer?'americano':'klasyk',partyId:null,aIds:A,bIds:B,aScore:sa,bScore:sb});
+  }
+  save(); toast('Dodano ekipę i 24 gierki ✨'); render();
+}
+
+/* ============================ INIT / deep-link ============================ */
+function handleHash(){
+  const m=location.hash.match(/join=([A-Z0-9]+)/i);
+  if(m && token){
+    const code=m[1].toUpperCase();
+    history.replaceState(null,'',location.pathname);
+    (async()=>{ try{ const r=await api('/api/mutate','POST',{type:'joinParty',payload:{code}}); S=r.data; S.meId=r.meId; ui.tab='home'; toast('Dołączono! 🎉'); render(); }
+      catch(e){ toast('Nie znaleziono party ('+code+')'); } })();
+  }
+}
+/* ============================ PWA (instalacja) ============================ */
+if('serviceWorker' in navigator){ window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{})); }
+let deferredPrompt=null;
+const isStandalone=()=>window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
+function showInstallBtn(){
+  if(isStandalone()||document.getElementById('installBtn'))return;
+  const b=document.createElement('button');
+  b.id='installBtn'; b.textContent='📲 Zainstaluj apkę';
+  b.style.cssText='position:fixed;left:50%;bottom:104px;transform:translateX(-50%);z-index:150;background:var(--ink);color:#fff;font-weight:800;font-size:14px;padding:12px 20px;border-radius:14px;box-shadow:var(--sh2);border:none';
+  b.onclick=async()=>{ if(!deferredPrompt)return; deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt=null; b.remove(); };
+  document.body.appendChild(b);
+}
+window.addEventListener('beforeinstallprompt',e=>{ e.preventDefault(); deferredPrompt=e; showInstallBtn(); });
+window.addEventListener('appinstalled',()=>{ const b=document.getElementById('installBtn'); if(b)b.remove(); toast('Zainstalowano! 🎾'); });
+// iOS Safari nie ma beforeinstallprompt — pokaż jednorazową podpowiedź
+(function iosHint(){
+  const iOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+  if(iOS && !isStandalone() && !localStorage.getItem('pp_ios_hint')){
+    setTimeout(()=>{ toast('Dodaj do ekranu: Udostępnij ⬆️ → „Do ekranu początkowego"'); localStorage.setItem('pp_ios_hint','1'); },1600);
+  }
+})();
+
+boot();
+</script>
+</body>
+</html>
