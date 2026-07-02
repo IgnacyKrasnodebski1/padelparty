@@ -46,9 +46,8 @@ Zbierz ekipę i sprawdź, kto naprawdę rządzi na korcie. 🎾
 ```
 
 ## Adres polityki prywatności (Privacy Policy URL)
-Po wdrożeniu backendu:
 ```
-https://TWOJ-BACKEND.onrender.com/privacy.html
+https://padelparty.onrender.com/privacy.html
 ```
 
 ## App Privacy (kwestionariusz „Data collection")

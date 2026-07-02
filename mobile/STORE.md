@@ -10,11 +10,9 @@ Natywna apka. Backend (`../server.js`) zostaje bez zmian — apka tylko z nim ga
 
 ## Krok po kroku
 
-### 1. Wskaż apce backend
-W `src/config.ts` ustaw:
-```ts
-export const API_URL = 'https://TWOJ-BACKEND.onrender.com';
-```
+### 1. Wskaż apce backend  ✅ ZROBIONE
+`src/config.ts` już wskazuje na produkcję: `https://padelparty.onrender.com`
+(zmieniaj tylko jeśli postawisz backend gdzie indziej).
 
 ### 2. Zainstaluj EAS i zaloguj się
 ```bash
