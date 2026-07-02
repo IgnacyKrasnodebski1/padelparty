@@ -8,11 +8,6 @@
     "scheme": "padelparty",
     "userInterfaceStyle": "light",
     "backgroundColor": "#F1F2F8",
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#6C5CE7"
-    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.padelparty.app",
@@ -31,6 +26,16 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#6C5CE7"
+        }
+      ]
+    ]
   }
 }
