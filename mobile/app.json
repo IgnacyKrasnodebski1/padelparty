@@ -36,6 +36,12 @@
           "backgroundColor": "#6C5CE7"
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "c419b3b0-5b39-426a-acbc-499ab464bf73"
+      }
+    },
+    "owner": "ignacykrasnodebski"
   }
 }
