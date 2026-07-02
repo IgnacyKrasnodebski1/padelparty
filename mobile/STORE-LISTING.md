@@ -67,4 +67,11 @@ https://github.com/IgnacyKrasnodebski1/padelparty
 ## Zrzuty ekranu (wymagane rozmiary)
 - iPhone 6.7" (1290×2796) — min. 1, zalecane 3–5.
 - iPhone 6.5" (1242×2688) — j.w.
-Gotowe wersje robocze: patrz `mobile/store-screens/` (do podmiany na zrzuty z prawdziwego telefonu/symulatora dla pewności).
+
+Najprościej złapać właściwe rozmiary z symulatora iOS:
+```bash
+cd mobile
+npx expo run:ios            # albo otwórz w symulatorze przez Expo Go / dev build
+# w symulatorze: Cmd+S zapisuje zrzut na Pulpit (dokładny rozmiar urządzenia)
+```
+Zalecane ekrany: Rejestracja, Ekran główny (Party), Rankingi (podium), Turniej (klasyfikacja), Gramy (zapis wyniku).

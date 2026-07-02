@@ -32,12 +32,26 @@ node server.js        # http://localhost:8099
 ```
 Na tej samej sieci WiFi znajomi wejdą przez `http://TWOJE-IP-LAN:8099`.
 
-## Wrzucenie do sieci (żeby grać z telefonów z każdego miejsca)
-To zwykła apka Node — postaw ją za darmo np. na **Render / Railway / Fly.io**:
-1. Wrzuć folder na GitHub.
-2. Nowy web service → build: (brak), start command: `node server.js`.
-3. Host ustawia `PORT` sam (serwer to czyta z `process.env.PORT`).
-4. Dostajesz publiczny link — dodaj go na telefonie do ekranu głównego jak apkę.
+## Wrzucenie do sieci (hosting) — 1 kliknięcie
+
+Repo jest już na GitHub: **https://github.com/IgnacyKrasnodebski1/padelparty**
+W repo jest `render.yaml`, więc Render sam wie co postawić.
+
+**Deploy jednym kliknięciem (Render, darmowy plan):**
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/IgnacyKrasnodebski1/padelparty)
+
+1. Kliknij przycisk → zaloguj się / załóż darmowe konto Render (możesz przez GitHub).
+2. Render odczyta `render.yaml` i postawi serwis `padelparty`. Kliknij **Apply**.
+3. Po chwili dostajesz publiczny adres, np. `https://padelparty.onrender.com`.
+4. Ten adres = link do PWA (dodaj na telefonie do ekranu głównego) **oraz** wartość `API_URL` dla natywnej apki (`mobile/src/config.ts`).
+
+Serwer sam czyta `PORT` z `process.env.PORT`. Health-check: `/healthz`. Polityka prywatności: `/privacy.html`.
+
+> Darmowy plan Render usypia serwis po ~15 min bezczynności (pierwsze wejście po przerwie ~30 s) i ma efemeryczny dysk — `data.json` może zniknąć przy redeployu. Do stałego grania warto potem przełączyć zapis na Postgres (drobna zmiana w `server.js`).
+
+## Natywna apka na App Store
+Katalog `mobile/` to natywna apka **React Native (Expo)**. Pełna instrukcja buildu i wysyłki: **[mobile/STORE.md](mobile/STORE.md)**. Gotowy listing (opis, słowa kluczowe): **[mobile/STORE-LISTING.md](mobile/STORE-LISTING.md)**.
 
 > Uwaga: `data.json` na darmowych hostingach z „efemerycznym" dyskiem może się kasować przy redeployu. Jak apka się przyjmie w ekipie, warto przełączyć bazę na Postgres/SQLite z trwałym dyskiem — łatwa podmiana warstwy zapisu w `server.js`.
 
