@@ -10,8 +10,13 @@ services:
     envVars:
       - key: NODE_VERSION
         value: "20"
-      # Trwała baza (Upstash Redis) — wpisz wartości w Render → Environment.
-      # Bez nich apka działa, ale dane są ulotne (znikają przy uśpieniu/redeployu).
+      # Trwała baza — wpisz wartości w Render → Environment (bez nich dane są ulotne).
+      # Opcja A (preferowana): Supabase — tabela public.kv (id text pk, data jsonb).
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_KEY
+        sync: false
+      # Opcja B: Upstash Redis (alternatywnie).
       - key: UPSTASH_REDIS_REST_URL
         sync: false
       - key: UPSTASH_REDIS_REST_TOKEN

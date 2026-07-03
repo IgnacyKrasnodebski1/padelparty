@@ -9,41 +9,60 @@ const PORT = process.env.PORT || 8099;
 const DB_FILE = path.join(ROOT, 'data.json');
 
 /* ---------- storage ----------
-   Trwałość: jeśli ustawione UPSTASH_REDIS_REST_URL + _TOKEN → dane w Upstash Redis
-   (permanentne, przetrwają redeploy/uśpienie). Inaczej fallback na lokalny plik data.json
-   (ulotny na darmowym Renderze). Zero zależności npm — czysty fetch. */
+   Trwałość (zero zależności, czysty fetch). Wybór wg env vars:
+   1) SUPABASE_URL + SUPABASE_KEY → tabela public.kv (id text pk, data jsonb)  [PREFEROWANE]
+   2) UPSTASH_REDIS_REST_URL + _TOKEN → Upstash Redis
+   3) brak → lokalny plik data.json (ULOTNY na darmowym Renderze).
+   Cały obiekt DB ({users, data}) trzymany jako jeden wiersz/klucz o id 'padelparty'. */
+const KV_KEY = 'padelparty';
+const SB_URL = (process.env.SUPABASE_URL || '').replace(/\/$/, '');
+const SB_KEY = process.env.SUPABASE_KEY || '';
+const SB_ON = !!(SB_URL && SB_KEY);
 const UP_URL = (process.env.UPSTASH_REDIS_REST_URL || '').replace(/\/$/, '');
 const UP_TOK = process.env.UPSTASH_REDIS_REST_TOKEN || '';
-const KV_KEY = 'padelparty:db';
 const UP_ON = !!(UP_URL && UP_TOK);
+const STORE = SB_ON ? 'Supabase (trwałe)' : UP_ON ? 'Upstash (trwałe)' : 'plik (ulotny)';
+const sbHeaders = { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}`, 'Content-Type': 'application/json' };
 let DB = { users: [], data: { players: [], games: [], parties: [], tournaments: [] } };
 
 async function loadDB() {
-  if (UP_ON) {
-    try {
+  try {
+    if (SB_ON) {
+      const r = await fetch(`${SB_URL}/rest/v1/kv?id=eq.${KV_KEY}&select=data`, { headers: sbHeaders });
+      const j = await r.json();
+      if (Array.isArray(j) && j[0] && j[0].data) { DB = j[0].data; console.log('DB z Supabase'); return; }
+      if (!Array.isArray(j)) console.error('Supabase load:', JSON.stringify(j).slice(0, 200));
+      else console.log('Supabase puste — świeża baza');
+      return;
+    }
+    if (UP_ON) {
       const r = await fetch(`${UP_URL}/get/${KV_KEY}`, { headers: { Authorization: `Bearer ${UP_TOK}` } });
       const j = await r.json();
-      if (j && j.result) { DB = JSON.parse(j.result); console.log('DB loaded from Upstash (trwałe)'); return; }
+      if (j && j.result) { DB = JSON.parse(j.result); console.log('DB z Upstash'); return; }
       console.log('Upstash puste — świeża baza'); return;
-    } catch (e) { console.error('Upstash load error, fallback plik:', e.message); }
-  }
+    }
+  } catch (e) { console.error('load error, fallback plik:', e.message); }
   try { DB = JSON.parse(fs.readFileSync(DB_FILE, 'utf8')); } catch (e) { /* fresh */ }
 }
-let fileTimer = null, upSaving = false, upDirty = false;
+let fileTimer = null, saving = false, dirty = false;
 function persist() {
   clearTimeout(fileTimer);
   fileTimer = setTimeout(() => { try { fs.writeFileSync(DB_FILE, JSON.stringify(DB)); } catch (e) {} }, 50);
-  if (UP_ON) saveUpstash();
+  if (SB_ON || UP_ON) saveRemote();
 }
-async function saveUpstash() {
-  upDirty = true; if (upSaving) return; upSaving = true;
-  while (upDirty) {
-    upDirty = false;
+async function saveRemote() {
+  dirty = true; if (saving) return; saving = true;
+  while (dirty) {
+    dirty = false;
     try {
-      await fetch(`${UP_URL}/set/${KV_KEY}`, { method: 'POST', headers: { Authorization: `Bearer ${UP_TOK}` }, body: JSON.stringify(DB) });
-    } catch (e) { console.error('Upstash save error:', e.message); }
+      if (SB_ON) {
+        await fetch(`${SB_URL}/rest/v1/kv`, { method: 'POST', headers: { ...sbHeaders, Prefer: 'resolution=merge-duplicates' }, body: JSON.stringify({ id: KV_KEY, data: DB }) });
+      } else {
+        await fetch(`${UP_URL}/set/${KV_KEY}`, { method: 'POST', headers: { Authorization: `Bearer ${UP_TOK}` }, body: JSON.stringify(DB) });
+      }
+    } catch (e) { console.error('remote save error:', e.message); }
   }
-  upSaving = false;
+  saving = false;
 }
 const uid = p => (p || 'id') + crypto.randomBytes(5).toString('hex');
 
@@ -192,5 +211,5 @@ const server = http.createServer(async (req, res) => {
 });
 
 loadDB().then(() => {
-  server.listen(PORT, () => console.log(`PadelParty on http://localhost:${PORT} (storage: ${UP_ON ? 'Upstash TRWAŁE' : 'plik ulotny'})`));
+  server.listen(PORT, () => console.log(`PadelParty on http://localhost:${PORT} (storage: ${STORE})`));
 });
