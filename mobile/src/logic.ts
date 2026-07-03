@@ -3,13 +3,13 @@ import { API_URL } from './config';
 export type Player = { id: string; name: string; emoji: string; color: string };
 export type Game = { id: string; ts: number; mode: 'americano' | 'klasyk'; partyId?: string | null; tournamentId?: string; aIds: string[]; bIds: string[]; aScore: number; bScore: number };
 export type Party = { id: string; name: string; code: string; hostId: string; mode: string; memberIds: string[]; status: 'open' | 'playing' | 'done'; createdAt: number };
-export type Match = { id: string; round: number; aIds: string[]; bIds: string[]; aScore: number; bScore: number; done: boolean };
+export type Match = { id: string; round: number; court?: number; aIds: string[]; bIds: string[]; aScore: number; bScore: number; done: boolean };
 export type TourMode = 'americano' | 'mexicano' | 'americano_pairs' | 'mexicano_pairs';
 export type Scoring = 'points' | 'classic';
 export type Tournament = {
   id: string; name: string; createdAt: number; status: 'live' | 'done';
   mode: TourMode; scoring: Scoring; pointsTarget: number;
-  weekly: boolean; rounds: number;
+  weekly: boolean; rounds: number; courts: number;
   playerIds: string[];       // uczestnicy (tryby indywidualne)
   teams?: string[][];        // stałe pary [[p1,p2],[p3,p4]] (tryby _pairs)
   matches: Match[];
@@ -97,75 +97,96 @@ export const RANKS: Record<string, RankDef> = {
   active: { name: 'Maszyny', emoji: '🏓', desc: 'Najwięcej gier', key: s => s.played, fmt: s => String(s.played), sub: s => `${s.wins}W ${s.losses}L` },
 };
 
-const mkMatch = (round: number, a: string[], b: string[]): Match => ({ id: uid('m'), round, aIds: a, bIds: b, aScore: 0, bScore: 0, done: false });
+type TBuild = Pick<Tournament, 'mode' | 'scoring' | 'playerIds' | 'teams' | 'courts' | 'matches'>;
 
-// AMERICANO (indywidualne): greedy rotacja partnerów, minimalizuje powtórki. N wielokrotność 4.
-export function genAmericano(ids: string[], rounds: number): Match[] {
-  const pool = ids.slice(0, Math.floor(ids.length / 4) * 4);
-  if (pool.length < 4) return [];
+// ile meczów rozegrał każdy gracz / każda para (do sprawiedliwej rotacji pauz)
+function playedByPlayer(t: TBuild): Record<string, number> {
+  const p: Record<string, number> = {}; t.playerIds.forEach(id => (p[id] = 0));
+  t.matches.forEach(m => [...m.aIds, ...m.bIds].forEach(id => { if (p[id] != null) p[id]++; }));
+  return p;
+}
+function playedByTeam(t: TBuild): Record<string, number> {
+  const p: Record<string, number> = {}; (t.teams || []).forEach(tm => (p[teamKey(tm)] = 0));
+  t.matches.forEach(m => { const ka = teamKey(m.aIds), kb = teamKey(m.bIds); if (p[ka] != null) p[ka]++; if (p[kb] != null) p[kb]++; });
+  return p;
+}
+// greedy: ustaw graczy tak, by kolejne pary [0,1],[2,3]… miały jak najmniej powtórzonych partnerów
+function partnerOrder(players: string[], matches: Match[]): string[] {
   const pc: Record<string, number> = {};
-  const key = (a: string, b: string) => [a, b].sort().join('|');
+  matches.forEach(m => { [m.aIds, m.bIds].forEach(ids => { if (ids.length === 2) { const k = teamKey(ids); pc[k] = (pc[k] || 0) + 1; } }); });
+  const rem = shuffle(players), out: string[] = [];
+  while (rem.length >= 2) {
+    const a = rem.shift()!; let bi = 0, bc = Infinity;
+    for (let i = 0; i < rem.length; i++) { const c = pc[teamKey([a, rem[i]])] || 0; if (c < bc) { bc = c; bi = i; } }
+    out.push(a, rem.splice(bi, 1)[0]);
+  }
+  return out;
+}
+// greedy: ustaw pary (indeksy) tak, by kolejni przeciwnicy [0,1],[2,3]… mieli najmniej powtórek
+function opponentOrder(idx: number[], teams: string[][], matches: Match[]): number[] {
+  const oc: Record<string, number> = {}; const key = (a: number, b: number) => [a, b].sort((x, y) => x - y).join('-');
+  matches.forEach(m => { const ai = teams.findIndex(t => teamKey(t) === teamKey(m.aIds)), bi = teams.findIndex(t => teamKey(t) === teamKey(m.bIds)); if (ai >= 0 && bi >= 0) oc[key(ai, bi)] = (oc[key(ai, bi)] || 0) + 1; });
+  const rem = shuffle(idx), out: number[] = [];
+  while (rem.length >= 2) {
+    const a = rem.shift()!; let bi = 0, bc = Infinity;
+    for (let i = 0; i < rem.length; i++) { const c = oc[key(a, rem[i])] || 0; if (c < bc) { bc = c; bi = i; } }
+    out.push(a, rem.splice(bi, 1)[0]);
+  }
+  return out;
+}
+
+// GŁÓWNY generator: buduje JEDNĄ rundę na bieżąco (korty + rotacja pauz + Mexicano wg rankingu na żywo)
+export function buildRound(t: TBuild, roundNum: number): Match[] {
   const M: Match[] = [];
-  for (let r = 1; r <= rounds; r++) {
-    const order = shuffle(pool), used = new Set<string>(), pairs: string[][] = [];
-    for (const p of order) {
-      if (used.has(p)) continue; used.add(p);
-      let best: string | null = null, bestc = Infinity;
-      for (const q of order) { if (used.has(q)) continue; const c = pc[key(p, q)] || 0; if (c < bestc) { bestc = c; best = q; } }
-      if (best) { used.add(best); pairs.push([p, best]); pc[key(p, best)] = (pc[key(p, best)] || 0) + 1; }
-    }
-    const sp = shuffle(pairs);
-    for (let i = 0; i + 1 < sp.length; i += 2) M.push(mkMatch(r, sp[i], sp[i + 1]));
+  const first = (t.matches || []).length === 0;
+  const courts = Math.max(1, t.courts || 1);
+
+  if (isPairs(t.mode)) {
+    const teams = t.teams || []; if (teams.length < 2) return [];
+    const played = playedByTeam(t as Tournament);
+    const cap = Math.min(Math.floor(teams.length / 2) * 2, courts * 2);
+    const order = teams.map((_, i) => i).sort((a, b) => (played[teamKey(teams[a])] - played[teamKey(teams[b])]) || (Math.random() - 0.5));
+    const playing = order.slice(0, cap);
+    let seq: number[];
+    if (t.mode === 'mexicano_pairs' && !first) { const rank: Record<number, number> = {}; teamStandings(t as Tournament).forEach((s, i) => (rank[s.idx] = i)); seq = [...playing].sort((a, b) => (rank[a] ?? 0) - (rank[b] ?? 0)); }
+    else seq = opponentOrder(playing, teams, t.matches);
+    for (let i = 0; i + 1 < seq.length; i += 2) M.push({ id: uid('m'), round: roundNum, court: i / 2 + 1, aIds: teams[seq[i]], bIds: teams[seq[i + 1]], aScore: 0, bScore: 0, done: false });
+    return M;
+  }
+
+  const N = t.playerIds.length; if (N < 4) return [];
+  const played = playedByPlayer(t as Tournament);
+  const cap = Math.min(Math.floor(N / 4) * 4, courts * 4);
+  const order = [...t.playerIds].sort((a, b) => (played[a] - played[b]) || (Math.random() - 0.5));
+  const playing = order.slice(0, cap);
+  let seq: string[];
+  if (t.mode === 'mexicano' && !first) { const rank: Record<string, number> = {}; tourStandings(t as Tournament).forEach((s, i) => (rank[s.id] = i)); seq = [...playing].sort((a, b) => (rank[a] ?? 0) - (rank[b] ?? 0)); }
+  else if (t.mode === 'americano') seq = partnerOrder(playing, t.matches);
+  else seq = shuffle(playing);
+  for (let i = 0; i + 3 < seq.length; i += 4) {
+    const g = [seq[i], seq[i + 1], seq[i + 2], seq[i + 3]];
+    const [A, B] = t.mode === 'mexicano' ? [[g[0], g[3]], [g[1], g[2]]] : [[g[0], g[1]], [g[2], g[3]]];
+    M.push({ id: uid('m'), round: roundNum, court: i / 4 + 1, aIds: A, bIds: B, aScore: 0, bScore: 0, done: false });
   }
   return M;
 }
-// MEXICANO (indywidualne): runda 1 losowo; kolejne wg rankingu (1+4 vs 2+3).
-function mexRound(sorted: string[], round: number): Match[] {
-  const M: Match[] = [];
-  for (let i = 0; i + 3 < sorted.length; i += 4) M.push(mkMatch(round, [sorted[i], sorted[i + 3]], [sorted[i + 1], sorted[i + 2]]));
-  return M;
-}
-export const genMexicanoFirst = (ids: string[]) => mexRound(shuffle(ids.slice(0, Math.floor(ids.length / 4) * 4)), 1);
 
-// AMERICANO W PARACH: round-robin stałych par (metoda okręgu).
-export function genTeamRoundRobin(teams: string[][], rounds: number): Match[] {
-  if (teams.length < 2) return [];
-  let list: number[] = teams.map((_, i) => i);
-  if (list.length % 2) list.push(-1);
-  const T = list.length, maxR = Math.min(rounds || T - 1, T - 1), M: Match[] = [];
-  let rot = list.slice();
-  for (let r = 1; r <= maxR; r++) {
-    for (let i = 0; i < T / 2; i++) { const a = rot[i], b = rot[T - 1 - i]; if (a >= 0 && b >= 0) M.push(mkMatch(r, teams[a], teams[b])); }
-    rot = [rot[0], ...rot.slice(-1), ...rot.slice(1, -1)];
-  }
-  return M;
-}
-// MEXICANO W PARACH: runda 1 losowo; kolejne wg rankingu par (1v2, 3v4...).
-function teamMexRound(teams: string[][], order: number[], round: number): Match[] {
-  const M: Match[] = [];
-  for (let i = 0; i + 1 < order.length; i += 2) M.push(mkMatch(round, teams[order[i]], teams[order[i + 1]]));
-  return M;
-}
-export const genTeamMexFirst = (teams: string[][]) => teamMexRound(teams, shuffle(teams.map((_, i) => i)), 1);
-
-// Generuj początkowe mecze wg trybu
-export function genInitial(t: Pick<Tournament, 'mode' | 'playerIds' | 'teams' | 'rounds'>): Match[] {
-  if (t.mode === 'americano') return genAmericano(t.playerIds, t.rounds);
-  if (t.mode === 'mexicano') return genMexicanoFirst(t.playerIds);
-  if (t.mode === 'americano_pairs') return genTeamRoundRobin(t.teams || [], t.rounds);
-  return genTeamMexFirst(t.teams || []);
-}
-// Następna runda (tylko Mexicano/Mexicano w parach) — wg aktualnego rankingu
+export const genInitial = (t: TBuild): Match[] => buildRound({ ...t, matches: [] }, 1);
 export function nextRound(t: Tournament): Match[] {
-  const nextR = (t.matches.reduce((m, x) => Math.max(m, x.round), 0)) + 1;
-  if (t.mode === 'mexicano') return mexRound(tourStandings(t).map(s => s.id), nextR);
-  if (t.mode === 'mexicano_pairs') return teamMexRound(t.teams || [], teamStandings(t).map(s => s.idx), nextR);
-  return [];
+  return buildRound(t, t.matches.reduce((m, x) => Math.max(m, x.round), 0) + 1);
 }
+export const maxRound = (t: Tournament) => t.matches.reduce((m, x) => Math.max(m, x.round), 0);
 export const roundComplete = (t: Tournament, round: number) => {
   const ms = t.matches.filter(m => m.round === round);
   return ms.length > 0 && ms.every(m => m.done);
 };
+// kto pauzuje w danej rundzie
+export function sittingOut(t: Tournament, round: number): string[] {
+  const inRound = new Set<string>();
+  t.matches.filter(m => m.round === round).forEach(m => [...m.aIds, ...m.bIds].forEach(id => inRound.add(id)));
+  const all = isPairs(t.mode) ? (t.teams || []).flat() : t.playerIds;
+  return all.filter(id => !inRound.has(id));
+}
 
 export function tourStandings(t: Tournament) {
   const st: Record<string, { id: string; pts: number; wins: number; played: number }> = {};

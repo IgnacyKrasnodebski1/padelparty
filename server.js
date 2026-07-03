@@ -131,7 +131,7 @@ function applyMutation(user, type, payload) {
       const t = {
         id: uid('t'), name: (p.name || 'Turniej').slice(0, 30), status: 'live', createdAt: Date.now(),
         mode: p.mode || 'americano', scoring: p.scoring === 'classic' ? 'classic' : 'points', pointsTarget: p.pointsTarget || 24,
-        weekly: !!p.weekly, rounds: p.rounds || 6,
+        weekly: !!p.weekly, rounds: p.rounds || 6, courts: Math.max(1, p.courts || 1),
         playerIds: p.playerIds || [], teams: p.teams || [], matches: p.matches || [],
       };
       d.tournaments.push(t); break;
