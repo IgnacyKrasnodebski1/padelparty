@@ -64,7 +64,8 @@ export default function Auth() {
           )}
 
           <View style={{ height: 16 }} />
-          <Btn title={mode === 'register' ? 'Zakładam konto 🎾' : 'Wchodzę 🎾'} grad="g1" onPress={submit} />
+          <Btn title={loading ? '⏳ Łączę z serwerem…' : (mode === 'register' ? 'Zakładam konto 🎾' : 'Wchodzę 🎾')} grad="g1" onPress={submit} />
+          {loading && <Text style={{ color: C.muted, fontSize: 12, fontWeight: '700', textAlign: 'center', marginTop: 10 }}>Pierwsze wejście po przerwie budzi serwer — chwilkę…</Text>}
         </View>
         <Text style={{ color: C.muted, fontSize: 12, fontWeight: '600', textAlign: 'center', marginTop: 10 }}>
           Konto = wspólne rankingi z ekipą. Logujesz się z każdego urządzenia.

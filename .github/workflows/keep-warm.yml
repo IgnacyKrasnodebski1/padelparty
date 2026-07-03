@@ -1,0 +1,21 @@
+name: keep-warm
+# Trzyma darmowy serwis na Render rozgrzany (bez tego usypia po ~15 min i pierwsze
+# logowanie trwa 30-50s). Pinguje /healthz co ~10 min. Public repo = darmowe.
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping backend
+        run: |
+          for i in 1 2 3 4 5; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 60 https://padelparty.onrender.com/healthz || echo 000)
+            echo "ping $i -> $code"
+            [ "$code" = "200" ] && exit 0
+            sleep 20
+          done
+          echo "backend nie odpowiedział 200 (mógł się budzić) — nie traktujemy jako błąd"
