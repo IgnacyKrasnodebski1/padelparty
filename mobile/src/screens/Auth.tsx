@@ -14,14 +14,22 @@ export default function Auth() {
   const [emoji, setEmoji] = useState('🎾');
   const [color, setColor] = useState('#6C5CE7');
   const [loading, setLoading] = useState(false);
+  const [showPass, setShowPass] = useState(false);
 
   const submit = async () => {
     if (loading) return;
+    const u = username.trim();
+    if (u.length < 2) return toast('Wpisz ksywę (min. 2 znaki)');
+    if (password.length < 3) return toast('Hasło min. 3 znaki');
     setLoading(true);
     try {
-      if (mode === 'register') await register(username.trim(), password, username.trim() || 'Gracz', emoji, color);
-      else await login(username.trim(), password);
-    } catch (e: any) { toast(e.message || 'Nie udało się'); }
+      if (mode === 'register') await register(u, password, u, emoji, color);
+      else await login(u, password);
+    } catch (e: any) {
+      const m = e?.message || '';
+      if (/network|fetch|failed|timeout|abort/i.test(m)) toast('Serwer się budzi lub brak sieci — kliknij jeszcze raz za chwilę');
+      else toast(m || 'Nie udało się');
+    }
     setLoading(false);
   };
 
@@ -40,9 +48,14 @@ export default function Auth() {
 
         <View style={st.card}>
           <Text style={st.label}>Ksywa (login)</Text>
-          <TextInput value={username} onChangeText={setUsername} placeholder="np. kuba" autoCapitalize="none" placeholderTextColor={C.muted} style={st.input} />
+          <TextInput value={username} onChangeText={setUsername} placeholder="np. kuba" autoCapitalize="none" autoCorrect={false} returnKeyType="next" placeholderTextColor={C.muted} style={st.input} />
           <Text style={st.label}>Hasło</Text>
-          <TextInput value={password} onChangeText={setPassword} placeholder="min. 3 znaki" secureTextEntry placeholderTextColor={C.muted} style={st.input} />
+          <View style={{ justifyContent: 'center' }}>
+            <TextInput value={password} onChangeText={setPassword} placeholder="min. 3 znaki" secureTextEntry={!showPass} autoCapitalize="none" autoCorrect={false} returnKeyType="go" onSubmitEditing={submit} placeholderTextColor={C.muted} style={[st.input, { paddingRight: 50 }]} />
+            <Pressable onPress={() => setShowPass(s => !s)} hitSlop={10} style={{ position: 'absolute', right: 12, padding: 6 }}>
+              <Text style={{ fontSize: 18 }}>{showPass ? '🙈' : '👁️'}</Text>
+            </Pressable>
+          </View>
 
           {mode === 'register' && (
             <>

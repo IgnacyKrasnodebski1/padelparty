@@ -36,15 +36,20 @@ function shuffle<T>(a: T[]): T[] { const b = [...a]; for (let i = b.length - 1; 
 const teamKey = (ids: string[]) => [...ids].sort().join('|');
 
 export async function api(path: string, method?: string, body?: any, token?: string | null) {
-  const r = await fetch(API_URL + path, {
-    method: method || 'GET',
-    headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: 'Bearer ' + token } : {}) },
-    body: body ? JSON.stringify(body) : undefined,
-  });
-  let j: any = {};
-  try { j = await r.json(); } catch {}
-  if (!r.ok) throw new Error(j.error || 'Błąd serwera');
-  return j;
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 70000); // do 70s (cold start darmowego hostingu)
+  try {
+    const r = await fetch(API_URL + path, {
+      method: method || 'GET',
+      headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: 'Bearer ' + token } : {}) },
+      body: body ? JSON.stringify(body) : undefined,
+      signal: ctrl.signal,
+    });
+    let j: any = {};
+    try { j = await r.json(); } catch {}
+    if (!r.ok) throw new Error(j.error || 'Błąd serwera');
+    return j;
+  } finally { clearTimeout(timer); }
 }
 
 export function pget(data: Data, id: string) { return data.players.find(p => p.id === id); }
