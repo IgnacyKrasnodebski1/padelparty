@@ -8,13 +8,42 @@ const ROOT = __dirname;
 const PORT = process.env.PORT || 8099;
 const DB_FILE = path.join(ROOT, 'data.json');
 
-/* ---------- storage ---------- */
+/* ---------- storage ----------
+   Trwałość: jeśli ustawione UPSTASH_REDIS_REST_URL + _TOKEN → dane w Upstash Redis
+   (permanentne, przetrwają redeploy/uśpienie). Inaczej fallback na lokalny plik data.json
+   (ulotny na darmowym Renderze). Zero zależności npm — czysty fetch. */
+const UP_URL = (process.env.UPSTASH_REDIS_REST_URL || '').replace(/\/$/, '');
+const UP_TOK = process.env.UPSTASH_REDIS_REST_TOKEN || '';
+const KV_KEY = 'padelparty:db';
+const UP_ON = !!(UP_URL && UP_TOK);
 let DB = { users: [], data: { players: [], games: [], parties: [], tournaments: [] } };
-try { DB = JSON.parse(fs.readFileSync(DB_FILE, 'utf8')); } catch (e) { /* fresh */ }
-let saveTimer = null;
+
+async function loadDB() {
+  if (UP_ON) {
+    try {
+      const r = await fetch(`${UP_URL}/get/${KV_KEY}`, { headers: { Authorization: `Bearer ${UP_TOK}` } });
+      const j = await r.json();
+      if (j && j.result) { DB = JSON.parse(j.result); console.log('DB loaded from Upstash (trwałe)'); return; }
+      console.log('Upstash puste — świeża baza'); return;
+    } catch (e) { console.error('Upstash load error, fallback plik:', e.message); }
+  }
+  try { DB = JSON.parse(fs.readFileSync(DB_FILE, 'utf8')); } catch (e) { /* fresh */ }
+}
+let fileTimer = null, upSaving = false, upDirty = false;
 function persist() {
-  clearTimeout(saveTimer);
-  saveTimer = setTimeout(() => { try { fs.writeFileSync(DB_FILE, JSON.stringify(DB)); } catch (e) { console.error('persist', e); } }, 50);
+  clearTimeout(fileTimer);
+  fileTimer = setTimeout(() => { try { fs.writeFileSync(DB_FILE, JSON.stringify(DB)); } catch (e) {} }, 50);
+  if (UP_ON) saveUpstash();
+}
+async function saveUpstash() {
+  upDirty = true; if (upSaving) return; upSaving = true;
+  while (upDirty) {
+    upDirty = false;
+    try {
+      await fetch(`${UP_URL}/set/${KV_KEY}`, { method: 'POST', headers: { Authorization: `Bearer ${UP_TOK}` }, body: JSON.stringify(DB) });
+    } catch (e) { console.error('Upstash save error:', e.message); }
+  }
+  upSaving = false;
 }
 const uid = p => (p || 'id') + crypto.randomBytes(5).toString('hex');
 
@@ -117,7 +146,7 @@ function serveStatic(req, res) {
 }
 
 /* ---------- server ---------- */
-http.createServer(async (req, res) => {
+const server = http.createServer(async (req, res) => {
   const url = req.url.split('?')[0];
   if (req.method === 'OPTIONS') return send(res, 200, {});
   if (url === '/healthz') return send(res, 200, { ok: true });
@@ -160,4 +189,8 @@ http.createServer(async (req, res) => {
     if (url === '/api/logout' && req.method === 'POST') { user.token = null; persist(); return send(res, 200, {}); }
     return send(res, 404, { error: 'not found' });
   } catch (e) { console.error(e); return send(res, 500, { error: 'server error' }); }
-}).listen(PORT, () => console.log('PadelParty on http://localhost:' + PORT));
+});
+
+loadDB().then(() => {
+  server.listen(PORT, () => console.log(`PadelParty on http://localhost:${PORT} (storage: ${UP_ON ? 'Upstash TRWAŁE' : 'plik ulotny'})`));
+});
