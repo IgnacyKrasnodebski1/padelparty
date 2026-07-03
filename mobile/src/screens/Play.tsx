@@ -8,7 +8,6 @@ import { useStore } from '../store';
 export default function Play({ init }: { init?: { mode: string; partyId: string | null } }) {
   const { data, mutate } = useStore();
   const [mode, setMode] = useState('americano');
-  const [format, setFormat] = useState('2v2');
   const [selA, setSelA] = useState<string[]>([]);
   const [selB, setSelB] = useState<string[]>([]);
   const [scA, setScA] = useState(0);
@@ -17,7 +16,7 @@ export default function Play({ init }: { init?: { mode: string; partyId: string 
 
   useEffect(() => { if (init) { setMode(init.mode); setPartyId(init.partyId); setSelA([]); setSelB([]); setScA(0); setScB(0); } }, [init]);
 
-  const cap = format === '2v2' ? 2 : 1;
+  const cap = 2;
   const pick = (team: 'a' | 'b', id: string) => {
     const mine = team === 'a' ? selA : selB, setMine = team === 'a' ? setSelA : setSelB;
     const other = team === 'a' ? selB : selA, setOther = team === 'a' ? setSelB : setSelA;
@@ -52,9 +51,6 @@ export default function Play({ init }: { init?: { mode: string; partyId: string 
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 100 }}>
         <View style={{ marginBottom: 12 }}>
           <Segmented options={[{ k: 'americano', label: '🎯 Americano' }, { k: 'klasyk', label: '🎾 Klasyk' }]} value={mode} onChange={setMode} />
-        </View>
-        <View style={{ marginBottom: 12 }}>
-          <Segmented options={[{ k: '2v2', label: '👥 Debel 2v2' }, { k: '1v1', label: '🧍 Singiel 1v1' }]} value={format} onChange={f => { setFormat(f); setSelA(a => a.slice(0, f === '2v2' ? 2 : 1)); setSelB(b => b.slice(0, f === '2v2' ? 2 : 1)); }} />
         </View>
 
         <Card style={{ marginBottom: 12 }}>

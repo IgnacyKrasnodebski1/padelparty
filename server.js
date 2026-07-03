@@ -32,8 +32,9 @@ function syncTourGames(t) {
   const d = DB.data;
   d.games = d.games.filter(g => g.tournamentId !== t.id);
   let i = 0;
+  const gmode = t.scoring === 'classic' ? 'klasyk' : 'americano';
   t.matches.filter(m => m.done && m.aScore !== m.bScore).forEach(m => {
-    d.games.push({ id: uid('g'), ts: t.createdAt + (++i), mode: 'americano', tournamentId: t.id, partyId: null, aIds: m.aIds, bIds: m.bIds, aScore: m.aScore, bScore: m.bScore });
+    d.games.push({ id: uid('g'), ts: t.createdAt + (++i), mode: gmode, tournamentId: t.id, partyId: null, aIds: m.aIds, bIds: m.bIds, aScore: m.aScore, bScore: m.bScore });
   });
 }
 function shortCode() { let c = ''; const A = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; for (let i = 0; i < 5; i++) c += A[crypto.randomInt(A.length)]; return c; }
@@ -79,7 +80,12 @@ function applyMutation(user, type, payload) {
       break;
     }
     case 'addTournament': {
-      const t = { id: uid('t'), name: (p.name || 'Turniej').slice(0, 24), format: p.format || '2v2', weekly: !!p.weekly, rounds: p.rounds || 4, playerIds: p.playerIds || [], matches: p.matches || [], status: 'live', createdAt: Date.now() };
+      const t = {
+        id: uid('t'), name: (p.name || 'Turniej').slice(0, 30), status: 'live', createdAt: Date.now(),
+        mode: p.mode || 'americano', scoring: p.scoring === 'classic' ? 'classic' : 'points', pointsTarget: p.pointsTarget || 24,
+        weekly: !!p.weekly, rounds: p.rounds || 6,
+        playerIds: p.playerIds || [], teams: p.teams || [], matches: p.matches || [],
+      };
       d.tournaments.push(t); break;
     }
     case 'updateTournament': {

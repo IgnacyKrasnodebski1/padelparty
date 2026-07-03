@@ -4,7 +4,16 @@ export type Player = { id: string; name: string; emoji: string; color: string };
 export type Game = { id: string; ts: number; mode: 'americano' | 'klasyk'; partyId?: string | null; tournamentId?: string; aIds: string[]; bIds: string[]; aScore: number; bScore: number };
 export type Party = { id: string; name: string; code: string; hostId: string; mode: string; memberIds: string[]; status: 'open' | 'playing' | 'done'; createdAt: number };
 export type Match = { id: string; round: number; aIds: string[]; bIds: string[]; aScore: number; bScore: number; done: boolean };
-export type Tournament = { id: string; name: string; format: '1v1' | '2v2'; weekly: boolean; rounds: number; playerIds: string[]; matches: Match[]; status: 'live' | 'done'; createdAt: number };
+export type TourMode = 'americano' | 'mexicano' | 'americano_pairs' | 'mexicano_pairs';
+export type Scoring = 'points' | 'classic';
+export type Tournament = {
+  id: string; name: string; createdAt: number; status: 'live' | 'done';
+  mode: TourMode; scoring: Scoring; pointsTarget: number;
+  weekly: boolean; rounds: number;
+  playerIds: string[];       // uczestnicy (tryby indywidualne)
+  teams?: string[][];        // stałe pary [[p1,p2],[p3,p4]] (tryby _pairs)
+  matches: Match[];
+};
 export type Data = { players: Player[]; games: Game[]; parties: Party[]; tournaments: Tournament[] };
 
 export const emptyData = (): Data => ({ players: [], games: [], parties: [], tournaments: [] });
@@ -12,6 +21,19 @@ export const uid = (p = 'id') => p + Math.random().toString(36).slice(2, 9);
 
 export const COLORS = ['#6C5CE7', '#2D6CFF', '#12B886', '#FF5A5F', '#FF9F1A', '#FF4D8D', '#66D01A', '#00B8D9'];
 export const EMOJIS = ['🎾', '🔥', '⚡', '🦁', '🐺', '🦊', '🦈', '🐉', '🚀', '👑', '💎', '🎯', '🏆', '🥊', '🌟', '🍕', '🦖', '🐼', '🦅', '🎸', '🤠'];
+
+export const MODE_INFO: Record<TourMode, { emoji: string; name: string; desc: string; pairs: boolean; mexicano: boolean }> = {
+  americano: { emoji: '🎾', name: 'Americano', desc: 'Co rundę inny partner, grasz z każdym. Punkty indywidualne.', pairs: false, mexicano: false },
+  mexicano: { emoji: '🌶️', name: 'Mexicano', desc: 'Jak Americano, ale pary wg rankingu na żywo — wyrównane mecze.', pairs: false, mexicano: true },
+  americano_pairs: { emoji: '👥', name: 'Americano w parach', desc: 'Stałe pary, każda gra z każdą (round-robin).', pairs: true, mexicano: false },
+  mexicano_pairs: { emoji: '🌶️👥', name: 'Mexicano w parach', desc: 'Stałe pary kojarzone wg rankingu — najlepsi z najlepszymi.', pairs: true, mexicano: true },
+};
+export const isPairs = (m: TourMode) => MODE_INFO[m].pairs;
+export const isMexicano = (m: TourMode) => MODE_INFO[m].mexicano;
+export const POINT_TARGETS = [16, 21, 24, 32];
+
+function shuffle<T>(a: T[]): T[] { const b = [...a]; for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; } return b; }
+const teamKey = (ids: string[]) => [...ids].sort().join('|');
 
 export async function api(path: string, method?: string, body?: any, token?: string | null) {
   const r = await fetch(API_URL + path, {
@@ -70,40 +92,75 @@ export const RANKS: Record<string, RankDef> = {
   active: { name: 'Maszyny', emoji: '🏓', desc: 'Najwięcej gier', key: s => s.played, fmt: s => String(s.played), sub: s => `${s.wins}W ${s.losses}L` },
 };
 
-export function genSchedule(ids: string[], format: '1v1' | '2v2', rounds: number): Match[] {
+const mkMatch = (round: number, a: string[], b: string[]): Match => ({ id: uid('m'), round, aIds: a, bIds: b, aScore: 0, bScore: 0, done: false });
+
+// AMERICANO (indywidualne): greedy rotacja partnerów, minimalizuje powtórki. N wielokrotność 4.
+export function genAmericano(ids: string[], rounds: number): Match[] {
+  const pool = ids.slice(0, Math.floor(ids.length / 4) * 4);
+  if (pool.length < 4) return [];
+  const pc: Record<string, number> = {};
+  const key = (a: string, b: string) => [a, b].sort().join('|');
   const M: Match[] = [];
-  const n = ids.length;
-  if (format === '1v1') {
-    let arr: (string | null)[] = [...ids];
-    if (n % 2) arr.push(null);
-    const R = arr.length, half = R / 2;
-    let rnd = arr.slice();
-    const maxR = Math.min(rounds || R - 1, R - 1);
-    for (let r = 0; r < maxR; r++) {
-      for (let i = 0; i < half; i++) {
-        const a = rnd[i], b = rnd[R - 1 - i];
-        if (a != null && b != null) M.push({ id: uid('m'), round: r + 1, aIds: [a], bIds: [b], aScore: 0, bScore: 0, done: false });
-      }
-      rnd = [rnd[0], ...rnd.slice(-1), ...rnd.slice(1, -1)];
+  for (let r = 1; r <= rounds; r++) {
+    const order = shuffle(pool), used = new Set<string>(), pairs: string[][] = [];
+    for (const p of order) {
+      if (used.has(p)) continue; used.add(p);
+      let best: string | null = null, bestc = Infinity;
+      for (const q of order) { if (used.has(q)) continue; const c = pc[key(p, q)] || 0; if (c < bestc) { bestc = c; best = q; } }
+      if (best) { used.add(best); pairs.push([p, best]); pc[key(p, best)] = (pc[key(p, best)] || 0) + 1; }
     }
-  } else {
-    const base = ids.filter((_, i) => i < Math.floor(n / 4) * 4);
-    const R = rounds || Math.max(3, base.length - 1);
-    for (let r = 0; r < R; r++) {
-      const sh = [...base].sort(() => Math.random() - 0.5);
-      for (let i = 0; i + 3 < sh.length; i += 4) {
-        const g = [sh[i], sh[i + 1], sh[i + 2], sh[i + 3]];
-        const pat = r % 3;
-        let A: string[], B: string[];
-        if (pat === 0) { A = [g[0], g[1]]; B = [g[2], g[3]]; }
-        else if (pat === 1) { A = [g[0], g[2]]; B = [g[1], g[3]]; }
-        else { A = [g[0], g[3]]; B = [g[1], g[2]]; }
-        M.push({ id: uid('m'), round: r + 1, aIds: A, bIds: B, aScore: 0, bScore: 0, done: false });
-      }
-    }
+    const sp = shuffle(pairs);
+    for (let i = 0; i + 1 < sp.length; i += 2) M.push(mkMatch(r, sp[i], sp[i + 1]));
   }
   return M;
 }
+// MEXICANO (indywidualne): runda 1 losowo; kolejne wg rankingu (1+4 vs 2+3).
+function mexRound(sorted: string[], round: number): Match[] {
+  const M: Match[] = [];
+  for (let i = 0; i + 3 < sorted.length; i += 4) M.push(mkMatch(round, [sorted[i], sorted[i + 3]], [sorted[i + 1], sorted[i + 2]]));
+  return M;
+}
+export const genMexicanoFirst = (ids: string[]) => mexRound(shuffle(ids.slice(0, Math.floor(ids.length / 4) * 4)), 1);
+
+// AMERICANO W PARACH: round-robin stałych par (metoda okręgu).
+export function genTeamRoundRobin(teams: string[][], rounds: number): Match[] {
+  if (teams.length < 2) return [];
+  let list: number[] = teams.map((_, i) => i);
+  if (list.length % 2) list.push(-1);
+  const T = list.length, maxR = Math.min(rounds || T - 1, T - 1), M: Match[] = [];
+  let rot = list.slice();
+  for (let r = 1; r <= maxR; r++) {
+    for (let i = 0; i < T / 2; i++) { const a = rot[i], b = rot[T - 1 - i]; if (a >= 0 && b >= 0) M.push(mkMatch(r, teams[a], teams[b])); }
+    rot = [rot[0], ...rot.slice(-1), ...rot.slice(1, -1)];
+  }
+  return M;
+}
+// MEXICANO W PARACH: runda 1 losowo; kolejne wg rankingu par (1v2, 3v4...).
+function teamMexRound(teams: string[][], order: number[], round: number): Match[] {
+  const M: Match[] = [];
+  for (let i = 0; i + 1 < order.length; i += 2) M.push(mkMatch(round, teams[order[i]], teams[order[i + 1]]));
+  return M;
+}
+export const genTeamMexFirst = (teams: string[][]) => teamMexRound(teams, shuffle(teams.map((_, i) => i)), 1);
+
+// Generuj początkowe mecze wg trybu
+export function genInitial(t: Pick<Tournament, 'mode' | 'playerIds' | 'teams' | 'rounds'>): Match[] {
+  if (t.mode === 'americano') return genAmericano(t.playerIds, t.rounds);
+  if (t.mode === 'mexicano') return genMexicanoFirst(t.playerIds);
+  if (t.mode === 'americano_pairs') return genTeamRoundRobin(t.teams || [], t.rounds);
+  return genTeamMexFirst(t.teams || []);
+}
+// Następna runda (tylko Mexicano/Mexicano w parach) — wg aktualnego rankingu
+export function nextRound(t: Tournament): Match[] {
+  const nextR = (t.matches.reduce((m, x) => Math.max(m, x.round), 0)) + 1;
+  if (t.mode === 'mexicano') return mexRound(tourStandings(t).map(s => s.id), nextR);
+  if (t.mode === 'mexicano_pairs') return teamMexRound(t.teams || [], teamStandings(t).map(s => s.idx), nextR);
+  return [];
+}
+export const roundComplete = (t: Tournament, round: number) => {
+  const ms = t.matches.filter(m => m.round === round);
+  return ms.length > 0 && ms.every(m => m.done);
+};
 
 export function tourStandings(t: Tournament) {
   const st: Record<string, { id: string; pts: number; wins: number; played: number }> = {};
@@ -114,5 +171,17 @@ export function tourStandings(t: Tournament) {
     if (m.aScore > m.bScore) m.aIds.forEach(i => st[i] && st[i].wins++);
     else if (m.bScore > m.aScore) m.bIds.forEach(i => st[i] && st[i].wins++);
   });
-  return Object.values(st).sort((a, b) => b.pts - a.pts || b.wins - a.wins);
+  return Object.values(st).sort((a, b) => (t.scoring === 'classic' ? b.wins - a.wins || b.pts - a.pts : b.pts - a.pts || b.wins - a.wins));
+}
+export function teamStandings(t: Tournament) {
+  const teams = t.teams || [];
+  const map: Record<string, { idx: number; pts: number; wins: number; played: number }> = {};
+  teams.forEach((tm, i) => (map[teamKey(tm)] = { idx: i, pts: 0, wins: 0, played: 0 }));
+  t.matches.filter(m => m.done).forEach(m => {
+    const ka = teamKey(m.aIds), kb = teamKey(m.bIds);
+    if (map[ka]) { map[ka].pts += m.aScore; map[ka].played++; }
+    if (map[kb]) { map[kb].pts += m.bScore; map[kb].played++; }
+    if (m.aScore > m.bScore && map[ka]) map[ka].wins++; else if (m.bScore > m.aScore && map[kb]) map[kb].wins++;
+  });
+  return Object.values(map).sort((a, b) => (t.scoring === 'classic' ? b.wins - a.wins || b.pts - a.pts : b.pts - a.pts || b.wins - a.wins));
 }

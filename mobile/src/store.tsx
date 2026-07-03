@@ -10,7 +10,7 @@ type Store = {
   register: (username: string, password: string, name: string, emoji: string, color: string) => Promise<void>;
   login: (username: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
-  mutate: (type: string, payload?: any) => Promise<void>;
+  mutate: (type: string, payload?: any) => Promise<Data>;
 };
 
 const Ctx = createContext<Store>(null as any);
@@ -56,6 +56,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const mutate = useCallback(async (type: string, payload?: any) => {
     const r = await api('/api/mutate', 'POST', { type, payload }, token);
     setData(r.data); setMeId(r.meId);
+    return r.data as Data;
   }, [token]);
 
   return <Ctx.Provider value={{ booted, token, data, meId, register, login, logout, mutate }}>{children}</Ctx.Provider>;
