@@ -13,7 +13,7 @@
 
 ## Requirement Completeness
 
-- [ ] No [NEEDS CLARIFICATION] markers remain — **3 otwarte (FR-006, FR-008, FR-060)** do rozstrzygnięcia
+- [x] No [NEEDS CLARIFICATION] markers remain — **rozstrzygnięte**: FR-006 (prowizja + abonamenty), FR-008 (my = jedyny system rezerwacji), FR-060 (MVP 1 klub → Warszawa, PLN)
 - [x] Requirements are testable and unambiguous
 - [x] Success criteria are measurable
 - [x] Success criteria are technology-agnostic (no implementation details)
@@ -31,5 +31,6 @@
 
 ## Notes
 
-- 3 markery [NEEDS CLARIFICATION] to świadome, pivotalne decyzje biznesowe (model monetyzacji, źródło prawdy o dostępności kortów, zasięg startowy). Domyślne założenia są zapisane w sekcji Assumptions; rozstrzygnięcie w `/speckit-clarify` lub w odpowiedzi na pytania poniżej.
-- Mechanika lock-in („znak firmowy") jest celowo zdefiniowana w US2, nie pozostawiona jako otwarte pytanie.
+- Wszystkie 3 pivotalne decyzje biznesowe rozstrzygnięte przez stakeholdera: prowizja + abonamenty (Q1 C), platforma = jedyny system rezerwacji (Q2 A), MVP jeden klub → Warszawa/PLN (Q3). Spec bez otwartych markerów.
+- Mechanika lock-in („znak firmowy") celowo zdefiniowana w US2 (liga klubu + ranking na żywo + ekran klubu + udostępnialne tytuły), nie zostawiona jako pytanie.
+- **Gotowe do `/speckit-plan`.**

@@ -110,7 +110,7 @@ Gracz może wystawić lub dołączyć do **otwartej gierki** w klubie („szukam
 
 - Co się dzieje, gdy dwie osoby jednocześnie opłacają ten sam slot? (blokada podwójnej rezerwacji, zwrot dla przegranego)
 - Jak system rozlicza **zwroty/anulacje** wg polityki klubu i kto ponosi prowizję przy anulacji?
-- Co, gdy klub korzysta już z zewnętrznego systemu rezerwacji — jak uniknąć podwójnej sprzedaży tego samego kortu? *(patrz clarification poniżej)*
+- Co z klubem pilotażowym, który równolegle prowadzi zapisy poza platformą (telefon/recepcja) — jak uniknąć podwójnej sprzedaży, skoro to my jesteśmy systemem rezerwacji (proces: wszystkie terminy wchodzą przez platformę / blokady ręczne w panelu)?
 - Jak porównywać poziom gracza uczciwie między klubami o różnym poziomie zawodników (kalibracja rankingu cross-klubowego)?
 - Co z graczem, który należy do wielu klubów — do której ligi/sezonu wpada dana gierka? (wybór klubu przy zapisie gierki; domyślnie klub, w którym grano)
 - Jak chronić przed nadużyciami poleceń (fałszywe konta dla nagród)?
@@ -127,9 +127,9 @@ Gracz może wystawić lub dołączyć do **otwartej gierki** w klubie („szukam
 - **FR-003**: System MUST prezentować graczom aktualną dostępność kortów i ceny w czasie zbliżonym do rzeczywistego.
 - **FR-004**: Users (gracze) MUST być w stanie zarezerwować i opłacić slot w aplikacji z natychmiastowym potwierdzeniem.
 - **FR-005**: System MUST zapobiegać podwójnej rezerwacji tego samego slotu.
-- **FR-006**: System MUST naliczać i ewidencjonować prowizję platformy od każdej opłaconej rezerwacji oraz udostępniać klubowi rozliczenie należności. [NEEDS CLARIFICATION: model monetyzacji rezerwacji — prowizja od transakcji, abonament klubu, czy oba?]
+- **FR-006**: System MUST monetyzować rezerwacje **dwutorowo**: (a) **prowizją** platformy od każdej opłaconej rezerwacji oraz (b) **abonamentem klubu w poziomach** (plan darmowy/podstawowy + wyższe plany z dodatkowymi narzędziami). System MUST naliczać i ewidencjonować prowizję oraz udostępniać klubowi rozliczenie należności.
 - **FR-007**: System MUST obsługiwać anulacje i zwroty zgodnie z polityką anulacji ustaloną przez klub.
-- **FR-008**: System MUST synchronizować dostępność kortów, aby ten sam kort nie został sprzedany dwukrotnie. [NEEDS CLARIFICATION: platforma jest jedynym źródłem prawdy o dostępności, czy integruje się z istniejącymi systemami rezerwacji klubów (np. Playtomic/Matchi)?]
+- **FR-008**: System MUST być **jedynym źródłem prawdy** o dostępności kortów klubu (platforma jest podstawowym systemem rezerwacji klubu; brak zależności od zewnętrznych systemów w v1) i zapobiegać podwójnej sprzedaży tego samego slotu. Integracje z zewnętrznymi systemami rezerwacji są poza zakresem v1 (możliwe rozszerzenie w przyszłości).
 
 **Liga klubu i ranking na żywo (US2)**
 - **FR-010**: System MUST pozwolić klubowi uruchomić **sezon ligi** i automatycznie zapisywać do niego wszystkich swoich graczy.
@@ -151,7 +151,7 @@ Gracz może wystawić lub dołączyć do **otwartej gierki** w klubie („szukam
 - **FR-032**: System MUST generować cykliczne wyróżnienia (np. „Klub tygodnia", „Wspinaczka miesiąca") jako materiał marketingowy.
 
 **Monetyzacja dookoła i panel klubu (US5)**
-- **FR-040**: System MUST oferować klubom **poziomy abonamentu** odblokowujące dodatkowe narzędzia. [NEEDS CLARIFICATION: patrz FR-006 — czy abonament jest głównym, czy dodatkowym źródłem przychodu?]
+- **FR-040**: System MUST oferować klubom **poziomy abonamentu** odblokowujące dodatkowe narzędzia. Abonament jest **komplementarnym** źródłem przychodu wobec prowizji od rezerwacji (FR-006) — plan wejściowy tani/darmowy, wyższe plany płatne.
 - **FR-041**: System MUST umożliwiać tworzenie **promowanych/płatnych wydarzeń i turniejów** ze sprzedażą miejsc.
 - **FR-042**: System MUST dostarczać klubowi **panel** z przychodami, obłożeniem kortów, liczbą i retencją graczy oraz narzędziami do organizacji turniejów.
 - **FR-043**: System SHOULD przewidywać przyszłe strumienie przychodu „dookoła" (np. członkostwa, sprzęt, treningi) jako rozszerzalne kategorie oferty.
@@ -160,7 +160,7 @@ Gracz może wystawić lub dołączyć do **otwartej gierki** w klubie („szukam
 - **FR-050**: Users MUST móc tworzyć i dołączać do otwartych gierek dobieranych poziomem, z opcją powiązania rezerwacji kortu przy komplecie składu.
 
 **Przekrojowe**
-- **FR-060**: System MUST obsługiwać płatności i wypłaty do klubów. [NEEDS CLARIFICATION: zasięg startowy — pilotaż w jednym kraju/walucie, czy wielokrajowo od startu (wpływa na płatności, podatki, języki)?]
+- **FR-060**: System MUST obsługiwać płatności i wypłaty do klubów. Zasięg startowy: **MVP z jednym pilotażowym klubem**, następnie **Warszawa** (rynek: Polska, waluta PLN, język polski). Architektura MUST być gotowa na późniejszą ekspansję na kolejne miasta/kraje bez przebudowy.
 - **FR-061**: System MUST działać w istniejącej apce gracza (mobilna) oraz udostępniać klubom narzędzia zarządcze (panel + widok ekranu klubu).
 - **FR-062**: System MUST zachować zgodność z ochroną danych osobowych, w tym prawo gracza do przenoszenia/usunięcia danych, niezależnie od mechanik lock-in.
 - **FR-063**: System MUST rejestrować zdarzenia finansowe (rezerwacje, prowizje, zwroty, wypłaty) w sposób umożliwiający rozliczenia i audyt.
@@ -203,8 +203,9 @@ Gracz może wystawić lub dołączyć do **otwartej gierki** w klubie („szukam
 - Bazuje na istniejącej apce PadelParty (konta bez maili, gierki, tryby Americano/Mexicano, turnieje round-by-round) — profil gracza i logika rankingu są rozszerzane, nie budowane od zera.
 - „Coś charakterystycznego" i mechanika lock-in są zdefiniowane jako **liga klubu + ranking na żywo + widok ekranu klubu + udostępnialne tytuły brandowane klubem** (US2) — to świadoma decyzja produktowa wynikająca z briefu, nie do doprecyzowania.
 - Rezerwacja dotyczy **kortów padlowych** (nie generyczny booking); jednostką sprzedaży jest slot na korcie.
-- Model monetyzacji zakłada domyślnie **prowizję od rezerwacji + opcjonalne abonamenty klubów**, do potwierdzenia (FR-006/FR-040).
-- Start zakłada **pilotaż w jednym kraju/walucie**, z architekturą gotową na ekspansję (FR-060), do potwierdzenia.
+- Model monetyzacji: **prowizja od rezerwacji + abonamenty klubów w poziomach** (potwierdzone — FR-006/FR-040).
+- Start: **MVP z jednym pilotażowym klubem → Warszawa** (Polska, PLN, PL), architektura gotowa na dalszą ekspansję (potwierdzone — FR-060).
+- Platforma jest **jedynym systemem rezerwacji** klubu w v1; brak integracji z zewnętrznymi systemami na start (potwierdzone — FR-008).
 - Płatności realizowane przez zewnętrznego, standardowego operatora płatności (szczegóły w fazie planu, nie w specyfikacji).
 - Widok „ekran klubu" to tryb wyświetlania (np. przeglądarka na TV/tablecie), nie osobne urządzenie sprzętowe.
 - Zgodność z RODO i prawo do przenoszenia danych mają pierwszeństwo nad mechanikami retencyjnymi (lock-in przez wartość, nie przez uwięzienie danych).
