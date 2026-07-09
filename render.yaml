@@ -10,10 +10,10 @@ services:
     envVars:
       - key: NODE_VERSION
         value: "20"
-      # Trwała baza — wpisz wartości w Render → Environment (bez nich dane są ulotne).
-      # Opcja A (preferowana): Supabase — tabela public.kv (id text pk, data jsonb).
+      # Trwała baza: Supabase — tabela public.kv (id text pk, data jsonb).
+      # URL nie jest sekretem — zarządzany przez blueprint. Klucz (service_role) w dashboardzie.
       - key: SUPABASE_URL
-        sync: false
+        value: https://ciqwnobxopioznfzhhgj.supabase.co
       - key: SUPABASE_KEY
         sync: false
       # Opcja B: Upstash Redis (alternatywnie).
