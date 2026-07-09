@@ -24,15 +24,22 @@ const UP_ON = !!(UP_URL && UP_TOK);
 const STORE = SB_ON ? 'Supabase (trwałe)' : UP_ON ? 'Upstash (trwałe)' : 'plik (ulotny)';
 const sbHeaders = { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}`, 'Content-Type': 'application/json' };
 let DB = { users: [], data: { players: [], games: [], parties: [], tournaments: [] } };
+// diagnostyka trwałości — widoczna w /healthz (bez sekretów)
+const sbState = { lastLoad: 'not-attempted', lastSave: 'not-attempted' };
 
 async function loadDB() {
   try {
     if (SB_ON) {
       const r = await fetch(`${SB_URL}/rest/v1/kv?id=eq.${KV_KEY}&select=data`, { headers: sbHeaders });
-      const j = await r.json();
-      if (Array.isArray(j) && j[0] && j[0].data) { DB = j[0].data; console.log('DB z Supabase'); return; }
-      if (!Array.isArray(j)) console.error('Supabase load:', JSON.stringify(j).slice(0, 200));
-      else console.log('Supabase puste — świeża baza');
+      const body = await r.text();
+      if (!r.ok) {
+        sbState.lastLoad = `HTTP ${r.status}: ${body.slice(0, 160)}`;
+        console.error('Supabase load FAIL', sbState.lastLoad);
+        return; // nie dotykaj pliku — lepiej pusta baza niż maskowanie błędu
+      }
+      const j = JSON.parse(body);
+      if (Array.isArray(j) && j[0] && j[0].data) { DB = j[0].data; sbState.lastLoad = 'ok:loaded'; console.log('DB z Supabase'); }
+      else { sbState.lastLoad = 'ok:empty'; console.log('Supabase puste — świeża baza'); }
       return;
     }
     if (UP_ON) {
@@ -41,7 +48,7 @@ async function loadDB() {
       if (j && j.result) { DB = JSON.parse(j.result); console.log('DB z Upstash'); return; }
       console.log('Upstash puste — świeża baza'); return;
     }
-  } catch (e) { console.error('load error, fallback plik:', e.message); }
+  } catch (e) { sbState.lastLoad = 'exception: ' + e.message; console.error('load error, fallback plik:', e.message); }
   try { DB = JSON.parse(fs.readFileSync(DB_FILE, 'utf8')); } catch (e) { /* fresh */ }
 }
 let fileTimer = null, saving = false, dirty = false;
@@ -56,11 +63,13 @@ async function saveRemote() {
     dirty = false;
     try {
       if (SB_ON) {
-        await fetch(`${SB_URL}/rest/v1/kv`, { method: 'POST', headers: { ...sbHeaders, Prefer: 'resolution=merge-duplicates' }, body: JSON.stringify({ id: KV_KEY, data: DB }) });
+        const r = await fetch(`${SB_URL}/rest/v1/kv`, { method: 'POST', headers: { ...sbHeaders, Prefer: 'resolution=merge-duplicates' }, body: JSON.stringify({ id: KV_KEY, data: DB }) });
+        if (!r.ok) { const t = await r.text(); sbState.lastSave = `HTTP ${r.status}: ${t.slice(0, 160)}`; console.error('Supabase save FAIL', sbState.lastSave); }
+        else sbState.lastSave = 'ok';
       } else {
         await fetch(`${UP_URL}/set/${KV_KEY}`, { method: 'POST', headers: { Authorization: `Bearer ${UP_TOK}` }, body: JSON.stringify(DB) });
       }
-    } catch (e) { console.error('remote save error:', e.message); }
+    } catch (e) { sbState.lastSave = 'exception: ' + e.message; console.error('remote save error:', e.message); }
   }
   saving = false;
 }
@@ -168,7 +177,7 @@ function serveStatic(req, res) {
 const server = http.createServer(async (req, res) => {
   const url = req.url.split('?')[0];
   if (req.method === 'OPTIONS') return send(res, 200, {});
-  if (url === '/healthz') return send(res, 200, { ok: true });
+  if (url === '/healthz') return send(res, 200, { ok: true, storage: STORE, sb: SB_ON ? sbState : undefined, users: DB.users.length });
   if (!url.startsWith('/api/')) return serveStatic(req, res);
 
   try {
