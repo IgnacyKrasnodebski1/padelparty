@@ -38,6 +38,12 @@ W budowie: **ekosystem klubów** (rezerwacje kortów z płatnością, ligi klubo
 `/speckit-specify → /speckit-clarify → /speckit-plan → /speckit-tasks → /speckit-implement`
 Feature bieżąca: `specs/001-club-ecosystem` (gałąź `001-club-ecosystem`) — spec + clarifications DONE, `plan.md` w trakcie (research.md niedokończony). `.specify/feature.json` wskazuje aktywny katalog.
 
+## Active Technologies (feature 001-club-ecosystem)
+- Backend docelowy: Express + Prisma + **Supabase Postgres** (pooler 6543 runtime / direct 5432 migracje); płatności **Stripe Connect** (Express accounts, BLIK/P24/karty, PLN, destination charges + application_fee); 2FA menedżerów: TOTP (otplib)
+- club-web: **Next.js na Vercel** (panel klubu, ekran TV `screen/[slug]?key=`, publiczny profil `k/[slug]`, strony osiągnięć `/a/[slug]`)
+- mobile: + `@stripe/stripe-react-native` (PaymentSheet), `expo-camera` (skan kart QR `PP-XXXX-XXXX`)
+- Artefakty planu: `specs/001-club-ecosystem/{plan,research,data-model,quickstart}.md` + `contracts/api.md`
+
 ## Komendy dev
 
 ```bash
