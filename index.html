@@ -290,7 +290,7 @@ function renderAuth(){
     <div style="position:relative;z-index:2">
       <div class="kick">🎾 padel z ekipą</div>
       <h1>PadelParty</h1>
-      <div class="sub">${reg?'Załóż konto — bez maili, sama ksywa i hasło.':'Zaloguj się i graj dalej.'}</div>
+      <div class="sub">${reg?'Załóż konto — bez maili, sam login i hasło.':'Zaloguj się i graj dalej.'}</div>
     </div>
   </div>
   <div class="app fade">
@@ -299,7 +299,7 @@ function renderAuth(){
       <button class="${!reg?'on':''}" data-act="authMode" data-m="login">🔑 Logowanie</button>
     </section>
     <section class="card">
-      <div class="field"><label>Ksywa (login)</label>
+      <div class="field"><label>Login</label>
         <input id="auName" placeholder="np. kuba" maxlength="16" autocomplete="username" autocapitalize="none"/></div>
       <div class="field"><label>Hasło</label>
         <input id="auPass" type="password" placeholder="min. 3 znaki" autocomplete="${reg?'new-password':'current-password'}"/></div>
@@ -667,7 +667,7 @@ function sheetAddPlayer(){
   openSheet(`
     <h2>👤 Nowy gracz</h2>
     <div class="sh-sub">Dodaj kumpla do ekipy (bez konta, od ręki).</div>
-    <div class="field"><label>Ksywa</label><input id="apName" placeholder="np. Franek" maxlength="16"/></div>
+    <div class="field"><label>Nazwa gracza</label><input id="apName" placeholder="np. Franek" maxlength="16"/></div>
     <div class="field"><label>Avatar</label><div class="emojigrid" id="apEmoji">${EMOJIS.map(e=>`<button data-act="apE" data-e="${e}" class="${mNew.emoji===e?'on':''}">${e}</button>`).join('')}</div></div>
     <div class="field"><label>Kolor</label><div class="colorgrid">${COLORS.map(c=>`<button data-act="apC" data-c="${c}" style="background:${c}" class="${mNew.color===c?'on':''}"></button>`).join('')}</div></div>
     <button class="btn grad" data-act="saveApPlayer">Dodaj gracza</button>`);
@@ -810,7 +810,7 @@ document.addEventListener('click',e=>{
     case 'apE': mNew.emoji=a.e; document.querySelectorAll('#apEmoji button').forEach(b=>b.classList.toggle('on',b.dataset.e===a.e)); break;
     case 'apC': mNew.color=a.c; t.parentNode.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.c===a.c)); break;
     case 'saveApPlayer':{
-      const nm=(document.getElementById('apName').value||'').trim(); if(!nm){toast('Wpisz ksywę');break;}
+      const nm=(document.getElementById('apName').value||'').trim(); if(!nm){toast('Wpisz nazwę gracza');break;}
       closeSheet(); toast(nm+' w ekipie! 👊');
       mutate('addPlayer',{name:nm,emoji:mNew.emoji,color:mNew.color}); break; }
     case 'delPlayer':{ if(a.id===S.meId)break; toast('Usuwam gracza'); mutate('delPlayer',{id:a.id}); break; }

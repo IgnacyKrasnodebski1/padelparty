@@ -12,6 +12,17 @@
 
 PadelParty startuje jako apka do zapisywania gierek i rankingów dla ekipy znajomych. Ta funkcja przekształca ją w **dwustronny ekosystem padla** łączący **graczy** i **kluby**. Kluby zyskują gotowy silnik zaangażowania (ligi, rankingi na żywo, rezerwacje), a gracze — jedno miejsce, w którym żyje cały ich padel: statystyki, znajomi, ranking, rezerwacje i turnieje. Monetyzacja idzie z rezerwacji kortów oraz „wszystkiego dookoła" (abonamenty klubów, promowane wydarzenia, dodatki). Efekt docelowy: **efekt sieciowy i lock-in** — im więcej klubów i graczy, tym większa wartość bycia w środku i tym trudniej wyjść.
 
+## Clarifications
+
+### Session 2026-07-09
+
+- Q: Czy MVP musi mieć płatności online od pierwszego dnia? → A: Tak — pełny przepływ płatności online (gracz płaci w apce, platforma potrąca prowizję, wypłaty do klubu) wchodzi w zakres MVP od dnia 1.
+- Q: Jak silne ma być konto menedżera klubu? → A: Wzmocnione konto (e-mail + silne hasło) z **obowiązkowym 2FA od startu**; konta graczy bez zmian funkcjonalnych.
+- Q (terminologia): → A: W całym produkcie słowo „ksywa" zastępujemy słowem **„login"** (UI, komunikaty, dokumentacja).
+- Q: Jak klub wchodzi na platformę (onboarding)? → A: **Zawsze kuratorowane** — kluby wyłącznie na zaproszenie/po weryfikacji przez platformę, również przy skali; brak otwartej samoobsługowej rejestracji klubów. Po zaproszeniu menedżer sam konfiguruje korty i cennik.
+- Q: Jaki cykl sezonu ligi klubu? → A: Klub może tworzyć **wiele lig/sezonów równolegle o różnych cyklach** (tygodniowe, miesięczne, roczne — działające w tym samym czasie); wynik gierki w klubie zasila wszystkie aktywne ligi tego klubu, w których uczestniczy gracz.
+- Q: Kiedy gierka „liczy się do klubu"? → A: **Fizyczna karta klubu** wręczana graczowi przy pierwszej wizycie (unikalny kod do zeskanowania). Zeskanowanie karty dołącza gracza do klubu i jego lig, a skan przy zapisie gierki przypisuje ją do klubu; rezerwacja przez aplikację przypisuje klub automatycznie. Karta jest jednocześnie brandowanym artefaktem marketingowym MVP („myk").
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Klub sprzedaje rezerwacje kortów (Priority: P1)
@@ -30,17 +41,18 @@ Menedżer klubu zakłada profil klubu, dodaje korty, godziny otwarcia i cennik. 
 
 ---
 
-### User Story 2 - Liga klubu i ranking na żywo (znak firmowy / silnik lock-in) (Priority: P1)
+### User Story 2 - Karta klubu, liga i ranking na żywo (znak firmowy / silnik lock-in) (Priority: P1)
 
-Każda gierka i turniej rozegrane „u nas" automatycznie zasilają **żywy ranking klubu** i **sezonową ligę** (drabinę), w której z automatu jest każdy gracz tego klubu. Ranking jest widoczny w aplikacji **oraz na ekranie w klubie** (TV/tablet przy recepcji). Gracz wspina się w rankingu przez samą grę, zdobywa klubowe tytuły („Król kortu #1 w [Klub]"), a sezon kończy się finałem/nagrodami. To zamienia każdą wizytę w ruch w rankingu → codzienny nawyk i powód, by wracać właśnie do tego klubu przez PadelParty.
+Przy pierwszej wizycie gracz dostaje od klubu **fizyczną, brandowaną kartę klubu** z unikalnym kodem. Zeskanowanie karty dołącza go do klubu i jego lig — od tej chwili każda gierka i turniej rozegrane „u nas" (skan karty lub rezerwacja przez apkę) automatycznie zasilają **żywy ranking klubu** i **równoległe ligi** (tygodniowe, miesięczne, roczne). Ranking jest widoczny w aplikacji **oraz na ekranie w klubie** (TV/tablet przy recepcji). Gracz wspina się w rankingu przez samą grę, zdobywa klubowe tytuły („Król kortu #1 w [Klub]"), a sezony kończą się finałami/nagrodami. Karta w portfelu + ruch w rankingu przy każdej wizycie = codzienny nawyk i powód, by wracać właśnie do tego klubu przez PadelParty.
 
 **Why this priority**: To jest to „coś charakterystycznego" — mechanika, która JEDNEMU klubowi daje mega zaangażowanie, zanim jeszcze jest sieć. Bez niej rezerwacje to zwykły marketplace bez lepkości.
 
-**Independent Test**: Włącz sezon ligi w klubie → rozegraj kilka gierek/turniejów → ranking i drabina aktualizują się na żywo w apce i na widoku „ekran klubu"; gracz dostaje klubowy tytuł do pochwalenia się.
+**Independent Test**: Wręcz graczowi kartę klubu → skan dołącza go do klubu i lig → rozegraj kilka gierek/turniejów → ranking i ligi aktualizują się na żywo w apce i na widoku „ekran klubu"; gracz dostaje klubowy tytuł do pochwalenia się.
 
 **Acceptance Scenarios**:
 
-1. **Given** aktywny sezon ligi klubu, **When** gracze kończą gierkę zapisaną w tym klubie, **Then** ich pozycje w rankingu klubu i lidze aktualizują się natychmiast w aplikacji i na widoku ekranu klubowego.
+0. **Given** nowy gracz z kartą otrzymaną przy pierwszej wizycie, **When** skanuje kod karty w aplikacji, **Then** zostaje członkiem klubu i jest automatycznie zapisany do jego aktywnych lig.
+1. **Given** aktywne ligi klubu, **When** gracze kończą gierkę przypisaną do klubu (skan karty lub rezerwacja), **Then** ich pozycje we wszystkich aktywnych ligach klubu aktualizują się natychmiast w aplikacji i na widoku ekranu klubowego.
 2. **Given** koniec sezonu, **When** okres się zamyka, **Then** wyłaniany jest zwycięzca/zwycięzcy, przyznawane są tytuły/nagrody i startuje nowy sezon z zachowaniem historii.
 3. **Given** gracz zdobywa czołowe miejsce lub tytuł, **When** wygrywa/awansuje, **Then** otrzymuje udostępnialne, brandowane klubem osiągnięcie.
 
@@ -114,6 +126,8 @@ Gracz może wystawić lub dołączyć do **otwartej gierki** w klubie („szukam
 - Jak porównywać poziom gracza uczciwie między klubami o różnym poziomie zawodników (kalibracja rankingu cross-klubowego)?
 - Co z graczem, który należy do wielu klubów — do której ligi/sezonu wpada dana gierka? (wybór klubu przy zapisie gierki; domyślnie klub, w którym grano)
 - Jak chronić przed nadużyciami poleceń (fałszywe konta dla nagród)?
+- Gracz zgubił kartę klubu / karta trafiła w cudze ręce — unieważnienie i ponowne wydanie bez utraty dorobku (FR-017); jeden kod nie może być powiązany z dwoma kontami.
+- Nabijanie rankingu klubowego gierkami rozegranymi poza klubem (skan karty z domu) — sygnały wiarygodności: powiązanie z rezerwacją, zgłoszenie wyniku przez wielu uczestników, możliwość moderacji przez klub.
 - Co, gdy klub odchodzi z platformy — jak zachować dane graczy i ich ranking (lock-in vs przenośność danych/RODO)?
 - Obsługa braku sieci przy zapisie gierki w klubie (kolejkowanie i późniejsza synchronizacja).
 
@@ -122,28 +136,31 @@ Gracz może wystawić lub dołączyć do **otwartej gierki** w klubie („szukam
 ### Functional Requirements
 
 **Kluby i korty (US1)**
-- **FR-001**: System MUST umożliwić utworzenie profilu klubu (nazwa, lokalizacja, opis, logo/branding, dane do wypłat) przez menedżera klubu.
+- **FR-001**: System MUST umożliwić utworzenie profilu klubu (nazwa, lokalizacja, opis, logo/branding, dane do wypłat). Kluby wchodzą **wyłącznie na zaproszenie/po weryfikacji przez platformę** (model kuratorowany — brak otwartej rejestracji klubów); po zaproszeniu menedżer samodzielnie konfiguruje profil, korty i cennik.
 - **FR-002**: System MUST umożliwić klubowi dodanie kortów wraz z godzinami otwarcia, długością slotów i cennikiem (w tym różne stawki np. dzień/wieczór/weekend).
 - **FR-003**: System MUST prezentować graczom aktualną dostępność kortów i ceny w czasie zbliżonym do rzeczywistego.
-- **FR-004**: Users (gracze) MUST być w stanie zarezerwować i opłacić slot w aplikacji z natychmiastowym potwierdzeniem.
+- **FR-004**: Users (gracze) MUST być w stanie zarezerwować i opłacić slot w aplikacji z natychmiastowym potwierdzeniem. Płatność online jest częścią MVP **od dnia 1** (nie ma trybu przejściowego „płatność na miejscu").
 - **FR-005**: System MUST zapobiegać podwójnej rezerwacji tego samego slotu.
 - **FR-006**: System MUST monetyzować rezerwacje **dwutorowo**: (a) **prowizją** platformy od każdej opłaconej rezerwacji oraz (b) **abonamentem klubu w poziomach** (plan darmowy/podstawowy + wyższe plany z dodatkowymi narzędziami). System MUST naliczać i ewidencjonować prowizję oraz udostępniać klubowi rozliczenie należności.
 - **FR-007**: System MUST obsługiwać anulacje i zwroty zgodnie z polityką anulacji ustaloną przez klub.
 - **FR-008**: System MUST być **jedynym źródłem prawdy** o dostępności kortów klubu (platforma jest podstawowym systemem rezerwacji klubu; brak zależności od zewnętrznych systemów w v1) i zapobiegać podwójnej sprzedaży tego samego slotu. Integracje z zewnętrznymi systemami rezerwacji są poza zakresem v1 (możliwe rozszerzenie w przyszłości).
 
 **Liga klubu i ranking na żywo (US2)**
-- **FR-010**: System MUST pozwolić klubowi uruchomić **sezon ligi** i automatycznie zapisywać do niego wszystkich swoich graczy.
-- **FR-011**: System MUST liczyć i aktualizować **ranking klubu na żywo** na podstawie gierek i turniejów rozegranych w tym klubie, natychmiast po zapisaniu wyniku.
+- **FR-010**: System MUST pozwolić klubowi prowadzić **wiele lig/sezonów równolegle, o różnych cyklach** (tygodniowy, miesięczny, roczny — jednocześnie), z automatycznym zapisem graczy klubu do lig.
+- **FR-011**: System MUST liczyć i aktualizować **ranking klubu na żywo** na podstawie gierek i turniejów rozegranych w tym klubie, natychmiast po zapisaniu wyniku; jeden wynik zasila **wszystkie aktywne ligi** klubu, w których uczestniczy gracz.
 - **FR-012**: System MUST udostępniać **widok „ekran klubu"** (do wyświetlenia na TV/tablecie w lokalu) z żywym rankingiem i bieżącymi meczami.
 - **FR-013**: System MUST wyłaniać zwycięzców sezonu, przyznawać **klubowe tytuły/nagrody** i archiwizować historię sezonów.
 - **FR-014**: System MUST generować udostępnialne, brandowane klubem osiągnięcia dla graczy (tytuły, awanse, rekordy).
+- **FR-015**: System MUST obsługiwać **fizyczne karty klubu** z unikalnymi kodami: klub generuje/zamawia pulę kart w panelu, wręcza kartę przy pierwszej wizycie, a zeskanowanie kodu przez gracza dołącza go do klubu i jego aktywnych lig.
+- **FR-016**: System MUST przypisywać gierkę do klubu na podstawie **skanu karty klubu** przy zapisie wyniku **lub automatycznie z rezerwacji** kortu w tym klubie; gierki bez żadnego z tych sygnałów nie zasilają rankingu klubu.
+- **FR-017**: System MUST umożliwiać unieważnienie i ponowne wydanie karty (zgubiona/skradziona) bez utraty dorobku gracza w klubie.
 
 **Tożsamość i sieć (US3)**
 - **FR-020**: System MUST zapewnić graczowi **jedną tożsamość** działającą we wszystkich klubach ekosystemu (bez zakładania konta od nowa w każdym klubie).
 - **FR-021**: System MUST przenosić statystyki, ranking i reputację gracza między klubami.
 - **FR-022**: System MUST liczyć **rankingi regionalne/globalne** łączące wyniki z wielu klubów z uczciwą kalibracją poziomu.
 - **FR-023**: Users MUST móc odkrywać kluby, otwarte gierki i graczy „w pobliżu" wg lokalizacji i poziomu.
-- **FR-024**: System MUST pozwolić graczowi na przynależność do wielu klubów i na przypisanie danej gierki do właściwego klubu/ligi.
+- **FR-024**: System MUST pozwolić graczowi na przynależność do wielu klubów (wiele kart klubowych na jednym koncie) i przypisywać gierkę do właściwego klubu wg FR-016.
 
 **Wiral i wzrost (US4)**
 - **FR-030**: System MUST umożliwiać udostępnianie osiągnięć/wyników na zewnątrz z linkiem prowadzącym do profilu klubu i szybkiego dołączenia/rezerwacji.
@@ -164,6 +181,8 @@ Gracz może wystawić lub dołączyć do **otwartej gierki** w klubie („szukam
 - **FR-061**: System MUST działać w istniejącej apce gracza (mobilna) oraz udostępniać klubom narzędzia zarządcze (panel + widok ekranu klubu).
 - **FR-062**: System MUST zachować zgodność z ochroną danych osobowych, w tym prawo gracza do przenoszenia/usunięcia danych, niezależnie od mechanik lock-in.
 - **FR-063**: System MUST rejestrować zdarzenia finansowe (rezerwacje, prowizje, zwroty, wypłaty) w sposób umożliwiający rozliczenia i audyt.
+- **FR-064**: Konta menedżerów klubów MUST wymagać e-maila, silnego hasła i **obowiązkowego uwierzytelniania dwuskładnikowego (2FA)** od pierwszego logowania. Konta graczy pozostają niskotarciowe (login + hasło).
+- **FR-065**: Produkt MUST używać terminu **„login"** (nie „ksywa") we wszystkich tekstach interfejsu i komunikatach.
 
 ### Key Entities *(include if feature involves data)*
 
@@ -173,8 +192,9 @@ Gracz może wystawić lub dołączyć do **otwartej gierki** w klubie („szukam
 - **Rezerwacja**: powiązanie gracza, slotu i płatności; status (opłacona/anulowana/zrealizowana).
 - **Płatność / Prowizja / Wypłata**: przepływy pieniężne między graczem, platformą a klubem.
 - **Gracz (rozszerzony)**: istniejący profil + przynależność do klubów, poziom, reputacja, ranking cross-klubowy.
-- **Członkostwo w klubie**: relacja gracz–klub (od kiedy, rola, status w lidze).
-- **Sezon / Liga**: cykl rywalizacji w klubie z rankingiem i finałem.
+- **Karta klubu**: fizyczna, brandowana karta z unikalnym kodem; wręczana przy pierwszej wizycie; dołącza gracza do klubu/lig i służy do przypisywania gierek; może być unieważniona i wydana ponownie.
+- **Członkostwo w klubie**: relacja gracz–klub (od kiedy, rola, status w lidze, powiązana karta).
+- **Sezon / Liga**: cykl rywalizacji w klubie z rankingiem i finałem; klub może prowadzić **wiele równoległych lig o różnych cyklach** (tygodniowa/miesięczna/roczna).
 - **Ranking klubu / regionalny / globalny**: klasyfikacje na różnych poziomach agregacji.
 - **Osiągnięcie / Tytuł / Odznaka**: udostępnialny dorobek gracza, brandowany klubem.
 - **Polecenie**: atrybucja pozyskania nowego użytkownika + nagroda.
@@ -187,7 +207,7 @@ Gracz może wystawić lub dołączyć do **otwartej gierki** w klubie („szukam
 
 ### Measurable Outcomes
 
-- **SC-001**: Klub jest w stanie w pełni się skonfigurować (profil + korty + cennik) i opublikować pierwsze wolne terminy w **mniej niż 30 minut**.
+- **SC-001**: Klub — od przyjęcia zaproszenia — jest w stanie w pełni się skonfigurować (profil + korty + cennik) i opublikować pierwsze wolne terminy w **mniej niż 30 minut**.
 - **SC-002**: Gracz może znaleźć i opłacić rezerwację kortu w **mniej niż 2 minuty**, a skuteczność ukończenia rezerwacji przekracza **90%**.
 - **SC-003**: W klubie z aktywną ligą **≥ 60%** grających w danym miesiącu rozegrało co najmniej jedną gierkę zapisaną w klubie (dowód zaangażowania przez mechanikę ligi).
 - **SC-004**: Retencja graczy klubu miesiąc-do-miesiąca (M1) **≥ 40%**, wyraźnie wyższa niż przed włączeniem ligi/rankingu.
@@ -201,7 +221,7 @@ Gracz może wystawić lub dołączyć do **otwartej gierki** w klubie („szukam
 ## Assumptions
 
 - Bazuje na istniejącej apce PadelParty (konta bez maili, gierki, tryby Americano/Mexicano, turnieje round-by-round) — profil gracza i logika rankingu są rozszerzane, nie budowane od zera.
-- „Coś charakterystycznego" i mechanika lock-in są zdefiniowane jako **liga klubu + ranking na żywo + widok ekranu klubu + udostępnialne tytuły brandowane klubem** (US2) — to świadoma decyzja produktowa wynikająca z briefu, nie do doprecyzowania.
+- „Coś charakterystycznego" i mechanika lock-in są zdefiniowane jako **fizyczna karta klubu (wręczana przy pierwszej wizycie) + równoległe ligi klubu + ranking na żywo + widok ekranu klubu + udostępnialne tytuły brandowane klubem** (US2) — świadoma decyzja produktowa potwierdzona w Clarifications.
 - Rezerwacja dotyczy **kortów padlowych** (nie generyczny booking); jednostką sprzedaży jest slot na korcie.
 - Model monetyzacji: **prowizja od rezerwacji + abonamenty klubów w poziomach** (potwierdzone — FR-006/FR-040).
 - Start: **MVP z jednym pilotażowym klubem → Warszawa** (Polska, PLN, PL), architektura gotowa na dalszą ekspansję (potwierdzone — FR-060).

@@ -19,7 +19,7 @@ export default function Auth() {
   const submit = async () => {
     if (loading) return;
     const u = username.trim();
-    if (u.length < 2) return toast('Wpisz ksywę (min. 2 znaki)');
+    if (u.length < 2) return toast('Wpisz login (min. 2 znaki)');
     if (password.length < 3) return toast('Hasło min. 3 znaki');
     setLoading(true);
     try {
@@ -38,7 +38,7 @@ export default function Auth() {
       <LinearGradient colors={G.g1} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={st.hero}>
         <Text style={st.kick}>🎾 PADEL Z EKIPĄ</Text>
         <Text style={st.h1}>PadelParty</Text>
-        <Text style={st.sub}>{mode === 'register' ? 'Załóż konto — bez maili, sama ksywa i hasło.' : 'Zaloguj się i graj dalej.'}</Text>
+        <Text style={st.sub}>{mode === 'register' ? 'Załóż konto — bez maili, sam login i hasło.' : 'Zaloguj się i graj dalej.'}</Text>
       </LinearGradient>
 
       <View style={{ padding: 16 }}>
@@ -47,7 +47,7 @@ export default function Auth() {
         </View>
 
         <View style={st.card}>
-          <Text style={st.label}>Ksywa (login)</Text>
+          <Text style={st.label}>Login</Text>
           <TextInput value={username} onChangeText={setUsername} placeholder="np. kuba" autoCapitalize="none" autoCorrect={false} returnKeyType="next" placeholderTextColor={C.muted} style={st.input} />
           <Text style={st.label}>Hasło</Text>
           <View style={{ justifyContent: 'center' }}>

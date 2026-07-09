@@ -174,7 +174,7 @@ export default function Tournaments() {
 
         <Text style={st.lbl}>Zawodnicy ({players.length})</Text>
         <View style={{ flexDirection: 'row', gap: 8, marginBottom: 8 }}>
-          <TextInput value={quick} onChangeText={setQuick} onSubmitEditing={quickAdd} returnKeyType="done" placeholder="Dopisz ksywę…" placeholderTextColor={C.muted} style={[st.input, { flex: 1, marginBottom: 0 }]} />
+          <TextInput value={quick} onChangeText={setQuick} onSubmitEditing={quickAdd} returnKeyType="done" placeholder="Dopisz gracza…" placeholderTextColor={C.muted} style={[st.input, { flex: 1, marginBottom: 0 }]} />
           <Btn title="+ Dodaj" grad="g1" small onPress={quickAdd} />
         </View>
         <View style={{ flexDirection: 'row', gap: 8, marginBottom: 8 }}>

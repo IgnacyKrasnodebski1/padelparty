@@ -18,7 +18,7 @@ export default function Profile() {
   const [color, setColor] = useState('#FF9F1A');
 
   const addPlayer = async () => {
-    if (!nm.trim()) return toast('Wpisz ksywę');
+    if (!nm.trim()) return toast('Wpisz nazwę gracza');
     setAddOpen(false); toast(nm.trim() + ' w ekipie! 👊');
     await mutate('addPlayer', { name: nm.trim(), emoji, color });
     setNm('');
@@ -71,7 +71,7 @@ export default function Profile() {
       </ScrollView>
 
       <Sheet visible={addOpen} onClose={() => setAddOpen(false)} title="👤 Nowy gracz" sub="Dodaj kumpla do ekipy (bez konta, od ręki).">
-        <Text style={st.lbl}>Ksywa</Text>
+        <Text style={st.lbl}>Nazwa gracza</Text>
         <TextInput value={nm} onChangeText={setNm} placeholder="np. Franek" placeholderTextColor={C.muted} style={st.input} />
         <Text style={st.lbl}>Avatar</Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
