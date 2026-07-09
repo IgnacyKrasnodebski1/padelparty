@@ -143,3 +143,9 @@ Polish (T100–T106) — po MVP; T100 przed wpuszczeniem pilota
 ## Implementation Strategy
 
 **MVP = Phase 1–4 (Setup + Foundational + US1 + US2)** → pilot z jednym klubem warszawskim (Scenariusze A–D z quickstart). Dopiero potem P2/P3 przyrostowo: US3 (sieć) → US4 (wzrost) → US5 (monetyzacja dookoła) → US6 (matchmaking). Po każdej fazie: checkpoint z quickstart + build TestFlight. Migracja prod (T100) dopiero po zielonych A–D na stagingu.
+
+## Phase 9: Convergence
+
+- [ ] T107 Zbuduj test obciążeniowy rezerwacji i klasyfikacji (k6 lub autocannon: równoległe POST /api/bookings na ten sam slot + GET standings; progi: p95 <500 ms, zero podwójnych rezerwacji) w `backend/tests/load/booking-load.js` — wymagane przed fazą Warszawa per SC-010 (missing)
+- [ ] T108 Zaktualizuj `specs/001-club-ecosystem/plan.md` Technical Context do faktycznych wersji (TypeScript 7, Express 5, Next.js 15, Prisma przypięte do 6 — z notką dlaczego nie 7: wymóg adapterów driverów) per plan: Technical Context (contradicts)
+- [ ] T109 Wyodrębnij współdzielony theme brandowy w `club-web/lib/theme.ts` (kolory/typografia PadelParty z mobile/src/theme.ts) i użyj go w `app/layout.tsx` + `app/page.tsx` per T002/plan: club-web (partial)
