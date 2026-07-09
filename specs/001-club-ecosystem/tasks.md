@@ -8,15 +8,15 @@
 
 ## Phase 1: Setup
 
-- [ ] T001 Scaffold pakietu `backend/` (Express + TS strict + Prisma init, struktura modułów wg plan.md) — `backend/package.json`, `backend/tsconfig.json`, `backend/src/index.ts`
-- [ ] T002 [P] Scaffold pakietu `club-web/` (Next.js 15 + TS strict, layout, theme brandowy PadelParty) — `club-web/package.json`, `club-web/app/layout.tsx`
-- [ ] T003 [P] Konfiguracja env i sekretów: `backend/.env.example` (DATABASE_URL, DIRECT_URL, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, JWT_SECRET, PLATFORM_URL), `club-web/.env.example` (API_URL)
-- [ ] T004 [P] Vitest + supertest w backendzie (config, przykładowy test dymny) — `backend/vitest.config.ts`, `backend/tests/smoke.test.ts`
+- [X] T001 Scaffold pakietu `backend/` (Express + TS strict + Prisma init, struktura modułów wg plan.md) — `backend/package.json`, `backend/tsconfig.json`, `backend/src/index.ts`
+- [X] T002 [P] Scaffold pakietu `club-web/` (Next.js 15 + TS strict, layout, theme brandowy PadelParty) — `club-web/package.json`, `club-web/app/layout.tsx`
+- [X] T003 [P] Konfiguracja env i sekretów: `backend/.env.example` (DATABASE_URL, DIRECT_URL, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, JWT_SECRET, PLATFORM_URL), `club-web/.env.example` (API_URL)
+- [X] T004 [P] Vitest + supertest w backendzie (config, przykładowy test dymny) — `backend/vitest.config.ts`, `backend/tests/smoke.test.ts`
 
 ## Phase 2: Foundational (blokuje wszystkie user stories)
 
-- [ ] T010 Pełna `schema.prisma` wg data-model.md (Player, Account, ManagerAccount, ManagerMembership, Club, Court, PriceRule, OpeningHours, Booking+enum statusów, PaymentEvent, Payout, ClubCard, CardBatch, ClubMembership, League, Season, Game+clubId, Party, Tournament, Achievement, Referral, Event, EventTicket) + unique `(courtId, startsAt)` — `backend/prisma/schema.prisma`
-- [ ] T011 Pierwsza migracja + generacja klienta (`prisma migrate dev`) — `backend/prisma/migrations/`
+- [X] T010 Pełna `schema.prisma` wg data-model.md (Player, Account, ManagerAccount, ManagerMembership, Club, Court, PriceRule, OpeningHours, Booking+enum statusów, PaymentEvent, Payout, ClubCard, CardBatch, ClubMembership, League, Season, Game+clubId, Party, Tournament, Achievement, Referral, Event, EventTicket) + unique `(courtId, startsAt)` — `backend/prisma/schema.prisma`
+- [ ] T011 Pierwsza migracja + generacja klienta — `backend/prisma/migrations/` *(klient wygenerowany, SQL `0001_init` gotowy offline; APPLY zablokowane: brak hasła DB Supabase)*
 - [ ] T012 Middleware: `authPlayer` (Bearer P, legacy-kompatybilny), `errorHandler` (`{error}` + kody z contracts), `rateLimiter` — `backend/src/middleware/`
 - [ ] T013 Port legacy API 1:1 na Prisma: `POST /api/register|login|logout`, `GET /api/state`, `POST /api/mutate` (wszystkie typy mutacji z server.js; identyczne kształty odpowiedzi) — `backend/src/modules/legacy/`
 - [ ] T014 Skrypt migracji bloba: `migrate-kv.ts` (REST kv → tabele, tryb `--dry-run`, raport liczności) — `backend/src/scripts/migrate-kv.ts`
@@ -95,7 +95,7 @@
 
 ## Phase 7: US5 — Monetyzacja dookoła + panel statystyk (P3)
 
-- [ ] T080 [US5] Statystyki panelu: `GET /api/mgr/stats?from&to` (przychody, prowizje, obłożenie %, aktywni gracze, retencja M1) — `backend/src/modules/clubs/stats.ts`
+- [ ] T080 [US5] Statystyki panelu: `GET /api/mgr/stats?from&to` (przychody, prowizje, obłożenie %, aktywni gracze, retencja M1, **odsetek graczy z ≥1 gierką w klubie w miesiącu** — metryka SC-003) — `backend/src/modules/clubs/stats.ts`
 - [ ] T081 [US5] Panel: dashboard statystyk (wykresy Recharts wg dataviz) — `club-web/app/panel/statystyki/page.tsx`
 - [ ] T082 [US5] Wydarzenia płatne: CRUD Event + `EventTicket` ze sprzedażą przez PaymentIntent (reuse US1), lista uczestników — `backend/src/modules/events/`
 - [ ] T083 [US5] Plany klubu: pole `planTier` + gating funkcji (free: 1 liga aktywna; pro: bez limitu + promowane eventy) — `backend/src/modules/clubs/plans.ts`

@@ -1,0 +1,463 @@
+// PadelParty — schema wg specs/001-club-ecosystem/data-model.md
+// Kwoty w groszach (Int). Czasy w UTC. Supabase Postgres: runtime przez pooler (DATABASE_URL),
+// migracje przez połączenie bezpośrednie (DIRECT_URL).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ───────────────────────── Tożsamość ─────────────────────────
+
+model Player {
+  id        String   @id @default(cuid())
+  name      String
+  emoji     String   @default("🎾")
+  color     String   @default("#6C5CE7")
+  createdAt DateTime @default(now())
+
+  account      Account?
+  memberships  ClubMembership[]
+  cards        ClubCard[]
+  bookings     Booking[]
+  achievements Achievement[]
+  gamesA       GamePlayerA[]
+  gamesB       GamePlayerB[]
+  referredBy   Referral?        @relation("referred")
+  referrals    Referral[]       @relation("referrer")
+  tickets      EventTicket[]
+}
+
+model Account {
+  id       String  @id @default(cuid())
+  login    String  @unique
+  passHash String
+  token    String? @unique
+  playerId String  @unique
+  player   Player  @relation(fields: [playerId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+model ManagerAccount {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  emailVerified Boolean   @default(false)
+  passHash      String?
+  totpSecret    String?
+  totpEnabled   Boolean   @default(false)
+  backupCodes   String[]  @default([])
+  inviteToken   String?   @unique
+  createdAt     DateTime  @default(now())
+  lastLoginAt   DateTime?
+
+  memberships ManagerMembership[]
+}
+
+model ManagerMembership {
+  id        String         @id @default(cuid())
+  managerId String
+  clubId    String
+  role      ManagerRole    @default(owner)
+  manager   ManagerAccount @relation(fields: [managerId], references: [id])
+  club      Club           @relation(fields: [clubId], references: [id])
+
+  @@unique([managerId, clubId])
+}
+
+enum ManagerRole {
+  owner
+  staff
+}
+
+// ───────────────────────── Klub i infrastruktura ─────────────────────────
+
+model Club {
+  id                String     @id @default(cuid())
+  slug              String     @unique
+  name              String
+  description       String     @default("")
+  city              String     @default("")
+  address           String     @default("")
+  lat               Float?
+  lng               Float?
+  logoUrl           String?
+  brandColor        String     @default("#6C5CE7")
+  status            ClubStatus @default(invited)
+  commissionBps     Int        @default(700) // 7%
+  cancellationHours Int        @default(24)
+  stripeAccountId   String?
+  chargesEnabled    Boolean    @default(false)
+  screenToken       String     @unique @default(cuid())
+  planTier          PlanTier   @default(free)
+  createdAt         DateTime   @default(now())
+
+  courts       Court[]
+  priceRules   PriceRule[]
+  openingHours OpeningHours[]
+  bookings     Booking[]
+  cards        ClubCard[]
+  cardBatches  CardBatch[]
+  memberships  ClubMembership[]
+  leagues      League[]
+  games        Game[]
+  achievements Achievement[]
+  managers     ManagerMembership[]
+  events       Event[]
+  payouts      Payout[]
+}
+
+enum ClubStatus {
+  invited
+  active
+  suspended
+}
+
+enum PlanTier {
+  free
+  pro
+  club_plus
+}
+
+model Court {
+  id      String  @id @default(cuid())
+  clubId  String
+  name    String
+  indoor  Boolean @default(true)
+  active  Boolean @default(true)
+  club    Club    @relation(fields: [clubId], references: [id])
+
+  priceRules PriceRule[]
+  bookings   Booking[]
+}
+
+model PriceRule {
+  id          String  @id @default(cuid())
+  clubId      String
+  courtId     String?
+  dayFrom     Int // 0=nd … 6=sb
+  dayTo       Int
+  timeFrom    String // "07:00"
+  timeTo      String // "23:00"
+  slotMinutes Int     @default(90) // 30|60|90|120
+  priceGr     Int
+  club        Club    @relation(fields: [clubId], references: [id])
+  court       Court?  @relation(fields: [courtId], references: [id])
+}
+
+model OpeningHours {
+  id        String @id @default(cuid())
+  clubId    String
+  dayOfWeek Int // 0–6
+  openFrom  String // "07:00"
+  openTo    String // "23:00"
+  club      Club   @relation(fields: [clubId], references: [id])
+
+  @@unique([clubId, dayOfWeek])
+}
+
+// ───────────────────────── Rezerwacje i pieniądze ─────────────────────────
+
+model Booking {
+  id              String        @id @default(cuid())
+  clubId          String
+  courtId         String
+  playerId        String? // null dla manual_block
+  startsAt        DateTime
+  endsAt          DateTime
+  priceGr         Int           @default(0)
+  commissionGr    Int           @default(0)
+  status          BookingStatus @default(pending_payment)
+  kind            BookingKind   @default(booking)
+  paymentIntentId String?       @unique
+  expiresAt       DateTime?
+  note            String?
+  createdAt       DateTime      @default(now())
+
+  club   Club    @relation(fields: [clubId], references: [id])
+  court  Court   @relation(fields: [courtId], references: [id])
+  player Player? @relation(fields: [playerId], references: [id])
+
+  // twardy anty-double-booking (R4): jeden start na kort
+  @@unique([courtId, startsAt])
+  @@index([clubId, startsAt])
+  @@index([playerId, startsAt])
+}
+
+enum BookingStatus {
+  pending_payment
+  confirmed
+  completed
+  expired
+  cancelled_refunded
+  cancelled_no_refund
+  cancelled_by_club
+}
+
+enum BookingKind {
+  booking
+  manual_block
+}
+
+model PaymentEvent {
+  id            String   @id @default(cuid())
+  bookingId     String?
+  eventType     String
+  stripeEventId String   @unique // idempotencja webhooków
+  amountGr      Int      @default(0)
+  feeGr         Int      @default(0)
+  payload       Json
+  createdAt     DateTime @default(now())
+
+  @@index([bookingId])
+}
+
+model Payout {
+  id             String   @id @default(cuid())
+  clubId         String
+  stripePayoutId String   @unique
+  amountGr       Int
+  status         String
+  arrivalDate    DateTime?
+  club           Club     @relation(fields: [clubId], references: [id])
+}
+
+// ───────────────────────── Karta klubu i członkostwo ─────────────────────────
+
+model CardBatch {
+  id        String     @id @default(cuid())
+  clubId    String
+  count     Int
+  createdAt DateTime   @default(now())
+  club      Club       @relation(fields: [clubId], references: [id])
+  cards     ClubCard[]
+}
+
+model ClubCard {
+  id          String     @id @default(cuid())
+  clubId      String
+  batchId     String
+  code        String     @unique // PP-XXXX-XXXX
+  status      CardStatus @default(unassigned)
+  playerId    String?
+  activatedAt DateTime?
+  revokedAt   DateTime?
+
+  club   Club      @relation(fields: [clubId], references: [id])
+  batch  CardBatch @relation(fields: [batchId], references: [id])
+  player Player?   @relation(fields: [playerId], references: [id])
+}
+
+enum CardStatus {
+  unassigned
+  active
+  revoked
+}
+
+model ClubMembership {
+  id       String           @id @default(cuid())
+  playerId String
+  clubId   String
+  source   MembershipSource @default(card)
+  status   MembershipStatus @default(active)
+  joinedAt DateTime         @default(now())
+
+  player Player @relation(fields: [playerId], references: [id])
+  club   Club   @relation(fields: [clubId], references: [id])
+
+  @@unique([playerId, clubId])
+}
+
+enum MembershipSource {
+  card
+  booking
+  invite
+}
+
+enum MembershipStatus {
+  active
+  left
+}
+
+// ───────────────────────── Ligi ─────────────────────────
+
+model League {
+  id         String       @id @default(cuid())
+  clubId     String
+  name       String
+  cycle      LeagueCycle
+  autoEnroll Boolean      @default(true)
+  scoring    LeagueScore  @default(points)
+  status     LeagueStatus @default(active)
+  createdAt  DateTime     @default(now())
+
+  club    Club     @relation(fields: [clubId], references: [id])
+  seasons Season[]
+}
+
+enum LeagueCycle {
+  weekly
+  monthly
+  yearly
+  custom
+}
+
+enum LeagueScore {
+  points
+  wins
+}
+
+enum LeagueStatus {
+  active
+  paused
+  ended
+}
+
+model Season {
+  id       String       @id @default(cuid())
+  leagueId String
+  startsAt DateTime
+  endsAt   DateTime
+  status   SeasonStatus @default(active)
+  winners  Json?
+
+  league       League        @relation(fields: [leagueId], references: [id])
+  achievements Achievement[]
+
+  @@index([leagueId, status])
+}
+
+enum SeasonStatus {
+  active
+  closed
+}
+
+// ───────────────────────── Gierki / party / turnieje (legacy, znormalizowane) ─────────────────────────
+
+model Game {
+  id           String   @id @default(cuid())
+  ts           DateTime @default(now())
+  mode         String // americano | klasyk
+  aScore       Int
+  bScore       Int
+  partyId      String?
+  tournamentId String?
+  clubId       String? // atrybucja FR-016
+  club         Club?    @relation(fields: [clubId], references: [id])
+
+  playersA GamePlayerA[]
+  playersB GamePlayerB[]
+
+  @@index([clubId, ts])
+  @@index([ts])
+}
+
+// jawne tabele łączące (kolejność graczy bez znaczenia, strony A/B znaczą)
+model GamePlayerA {
+  gameId   String
+  playerId String
+  game     Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  player   Player @relation(fields: [playerId], references: [id])
+
+  @@id([gameId, playerId])
+}
+
+model GamePlayerB {
+  gameId   String
+  playerId String
+  game     Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  player   Player @relation(fields: [playerId], references: [id])
+
+  @@id([gameId, playerId])
+}
+
+model PartyGroup {
+  id        String   @id @default(cuid())
+  name      String
+  code      String   @unique
+  hostId    String
+  mode      String   @default("americano")
+  memberIds String[]
+  status    String   @default("open") // open|playing|done
+  createdAt DateTime @default(now())
+}
+
+model Tournament {
+  id           String   @id @default(cuid())
+  name         String
+  mode         String // americano|mexicano|americano_pairs|mexicano_pairs
+  scoring      String   @default("points")
+  pointsTarget Int      @default(24)
+  weekly       Boolean  @default(false)
+  rounds       Int      @default(0)
+  courts       Int      @default(1)
+  playerIds    String[]
+  teams        Json? // string[][]
+  matches      Json // Match[] — struktura jak w mobile/logic.ts
+  status       String   @default("live") // live|done
+  clubId       String?
+  createdAt    DateTime @default(now())
+}
+
+// ───────────────────────── Osiągnięcia / polecenia / wydarzenia ─────────────────────────
+
+model Achievement {
+  id         String   @id @default(cuid())
+  playerId   String
+  clubId     String?
+  seasonId   String?
+  type       String // season_winner | title | streak | record | highlight
+  label      String
+  sharedSlug String   @unique @default(cuid())
+  createdAt  DateTime @default(now())
+
+  player Player  @relation(fields: [playerId], references: [id])
+  club   Club?   @relation(fields: [clubId], references: [id])
+  season Season? @relation(fields: [seasonId], references: [id])
+}
+
+model Referral {
+  id               String       @id @default(cuid())
+  referrerPlayerId String
+  referredPlayerId String       @unique
+  source           String       @default("share") // share|card|invite
+  rewardStatus     RewardStatus @default(pending)
+  createdAt        DateTime     @default(now())
+
+  referrer Player @relation("referrer", fields: [referrerPlayerId], references: [id])
+  referred Player @relation("referred", fields: [referredPlayerId], references: [id])
+}
+
+enum RewardStatus {
+  pending
+  granted
+}
+
+model Event {
+  id        String   @id @default(cuid())
+  clubId    String
+  name      String
+  startsAt  DateTime
+  capacity  Int
+  priceGr   Int?
+  promoted  Boolean  @default(false)
+  club      Club     @relation(fields: [clubId], references: [id])
+  tickets   EventTicket[]
+}
+
+model EventTicket {
+  id              String  @id @default(cuid())
+  eventId         String
+  playerId        String
+  paymentIntentId String? @unique
+  status          String  @default("pending") // pending|paid|cancelled
+  event           Event   @relation(fields: [eventId], references: [id])
+  player          Player  @relation(fields: [playerId], references: [id])
+
+  @@unique([eventId, playerId])
+}

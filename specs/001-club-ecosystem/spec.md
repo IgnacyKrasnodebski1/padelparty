@@ -43,7 +43,7 @@ Menedżer klubu zakłada profil klubu, dodaje korty, godziny otwarcia i cennik. 
 
 ### User Story 2 - Karta klubu, liga i ranking na żywo (znak firmowy / silnik lock-in) (Priority: P1)
 
-Przy pierwszej wizycie gracz dostaje od klubu **fizyczną, brandowaną kartę klubu** z unikalnym kodem. Zeskanowanie karty dołącza go do klubu i jego lig — od tej chwili każda gierka i turniej rozegrane „u nas" (skan karty lub rezerwacja przez apkę) automatycznie zasilają **żywy ranking klubu** i **równoległe ligi** (tygodniowe, miesięczne, roczne). Ranking jest widoczny w aplikacji **oraz na ekranie w klubie** (TV/tablet przy recepcji). Gracz wspina się w rankingu przez samą grę, zdobywa klubowe tytuły („Król kortu #1 w [Klub]"), a sezony kończą się finałami/nagrodami. Karta w portfelu + ruch w rankingu przy każdej wizycie = codzienny nawyk i powód, by wracać właśnie do tego klubu przez PadelParty.
+Przy pierwszej wizycie gracz dostaje od klubu **fizyczną, brandowaną kartę klubu** z unikalnym kodem. Zeskanowanie karty dołącza go do klubu i jego lig — od tej chwili każda gierka i turniej rozegrane „u nas" (skan karty lub rezerwacja przez apkę) automatycznie zasilają **żywy ranking klubu** i **równoległe ligi** (tygodniowe, miesięczne, roczne — tabele klasyfikacyjne). Ranking jest widoczny w aplikacji **oraz na ekranie w klubie** (TV/tablet przy recepcji). Gracz wspina się w rankingu przez samą grę, zdobywa klubowe tytuły („Król kortu #1 w [Klub]"), a sezony kończą się finałami/nagrodami. Karta w portfelu + ruch w rankingu przy każdej wizycie = codzienny nawyk i powód, by wracać właśnie do tego klubu przez PadelParty.
 
 **Why this priority**: To jest to „coś charakterystycznego" — mechanika, która JEDNEMU klubowi daje mega zaangażowanie, zanim jeszcze jest sieć. Bez niej rezerwacje to zwykły marketplace bez lepkości.
 
@@ -51,10 +51,10 @@ Przy pierwszej wizycie gracz dostaje od klubu **fizyczną, brandowaną kartę kl
 
 **Acceptance Scenarios**:
 
-0. **Given** nowy gracz z kartą otrzymaną przy pierwszej wizycie, **When** skanuje kod karty w aplikacji, **Then** zostaje członkiem klubu i jest automatycznie zapisany do jego aktywnych lig.
-1. **Given** aktywne ligi klubu, **When** gracze kończą gierkę przypisaną do klubu (skan karty lub rezerwacja), **Then** ich pozycje we wszystkich aktywnych ligach klubu aktualizują się natychmiast w aplikacji i na widoku ekranu klubowego.
-2. **Given** koniec sezonu, **When** okres się zamyka, **Then** wyłaniany jest zwycięzca/zwycięzcy, przyznawane są tytuły/nagrody i startuje nowy sezon z zachowaniem historii.
-3. **Given** gracz zdobywa czołowe miejsce lub tytuł, **When** wygrywa/awansuje, **Then** otrzymuje udostępnialne, brandowane klubem osiągnięcie.
+1. **Given** nowy gracz z kartą otrzymaną przy pierwszej wizycie, **When** skanuje kod karty w aplikacji, **Then** zostaje członkiem klubu i jest automatycznie zapisany do jego aktywnych lig.
+2. **Given** aktywne ligi klubu, **When** gracze kończą gierkę przypisaną do klubu (skan karty lub rezerwacja), **Then** ich pozycje we wszystkich aktywnych ligach klubu aktualizują się natychmiast w aplikacji i na widoku ekranu klubowego.
+3. **Given** koniec sezonu, **When** okres się zamyka, **Then** wyłaniany jest zwycięzca/zwycięzcy, przyznawane są tytuły/nagrody i startuje nowy sezon z zachowaniem historii.
+4. **Given** gracz zdobywa czołowe miejsce lub tytuł, **When** wygrywa/awansuje, **Then** otrzymuje udostępnialne, brandowane klubem osiągnięcie.
 
 ---
 
@@ -138,10 +138,10 @@ Gracz może wystawić lub dołączyć do **otwartej gierki** w klubie („szukam
 **Kluby i korty (US1)**
 - **FR-001**: System MUST umożliwić utworzenie profilu klubu (nazwa, lokalizacja, opis, logo/branding, dane do wypłat). Kluby wchodzą **wyłącznie na zaproszenie/po weryfikacji przez platformę** (model kuratorowany — brak otwartej rejestracji klubów); po zaproszeniu menedżer samodzielnie konfiguruje profil, korty i cennik.
 - **FR-002**: System MUST umożliwić klubowi dodanie kortów wraz z godzinami otwarcia, długością slotów i cennikiem (w tym różne stawki np. dzień/wieczór/weekend).
-- **FR-003**: System MUST prezentować graczom aktualną dostępność kortów i ceny w czasie zbliżonym do rzeczywistego.
+- **FR-003**: System MUST prezentować graczom aktualną dostępność kortów i ceny z opóźnieniem nie większym niż 10 s względem stanu faktycznego.
 - **FR-004**: Users (gracze) MUST być w stanie zarezerwować i opłacić slot w aplikacji z natychmiastowym potwierdzeniem. Płatność online jest częścią MVP **od dnia 1** (nie ma trybu przejściowego „płatność na miejscu").
 - **FR-005**: System MUST zapobiegać podwójnej rezerwacji tego samego slotu.
-- **FR-006**: System MUST monetyzować rezerwacje **dwutorowo**: (a) **prowizją** platformy od każdej opłaconej rezerwacji oraz (b) **abonamentem klubu w poziomach** (plan darmowy/podstawowy + wyższe plany z dodatkowymi narzędziami). System MUST naliczać i ewidencjonować prowizję oraz udostępniać klubowi rozliczenie należności.
+- **FR-006**: System MUST monetyzować rezerwacje **dwutorowo**: (a) **prowizją** platformy od każdej opłaconej rezerwacji oraz (b) **abonamentem klubu w poziomach** (szczegóły poziomów: FR-040). System MUST naliczać i ewidencjonować prowizję oraz udostępniać klubowi rozliczenie należności.
 - **FR-007**: System MUST obsługiwać anulacje i zwroty zgodnie z polityką anulacji ustaloną przez klub.
 - **FR-008**: System MUST być **jedynym źródłem prawdy** o dostępności kortów klubu (platforma jest podstawowym systemem rezerwacji klubu; brak zależności od zewnętrznych systemów w v1) i zapobiegać podwójnej sprzedaży tego samego slotu. Integracje z zewnętrznymi systemami rezerwacji są poza zakresem v1 (możliwe rozszerzenie w przyszłości).
 
@@ -158,7 +158,7 @@ Gracz może wystawić lub dołączyć do **otwartej gierki** w klubie („szukam
 **Tożsamość i sieć (US3)**
 - **FR-020**: System MUST zapewnić graczowi **jedną tożsamość** działającą we wszystkich klubach ekosystemu (bez zakładania konta od nowa w każdym klubie).
 - **FR-021**: System MUST przenosić statystyki, ranking i reputację gracza między klubami.
-- **FR-022**: System MUST liczyć **rankingi regionalne/globalne** łączące wyniki z wielu klubów z uczciwą kalibracją poziomu.
+- **FR-022**: System MUST liczyć **rankingi regionalne/globalne** łączące wyniki z wielu klubów. W MVP podstawą jest wspólne ELO (jedna pula); formalna kalibracja między klubami wchodzi od fazy Warszawa (dane pilota posłużą do strojenia).
 - **FR-023**: Users MUST móc odkrywać kluby, otwarte gierki i graczy „w pobliżu" wg lokalizacji i poziomu.
 - **FR-024**: System MUST pozwolić graczowi na przynależność do wielu klubów (wiele kart klubowych na jednym koncie) i przypisywać gierkę do właściwego klubu wg FR-016.
 
