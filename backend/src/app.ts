@@ -1,4 +1,5 @@
 import express from 'express';
+import { healthz } from './modules/health';
 
 export const app = express();
 
@@ -14,6 +15,5 @@ app.use((req, res, next) => {
   next();
 });
 
-app.get('/healthz', (_req, res) => {
-  res.json({ ok: true, service: 'padelparty-backend', storage: 'postgres' });
-});
+// Legacy obsługiwał /healthz dla KAŻDEJ metody (server.js), nie tylko GET.
+app.all('/healthz', healthz);
