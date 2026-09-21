@@ -21,7 +21,7 @@
 - [ ] T013 Port legacy API 1:1 na Prisma: `POST /api/register|login|logout`, `GET /api/state`, `POST /api/mutate` (wszystkie typy mutacji z server.js; identyczne kształty odpowiedzi) — `backend/src/modules/legacy/`
 - [ ] T014 Skrypt migracji bloba: `migrate-kv.ts` (REST kv → tabele, tryb `--dry-run`, raport liczności) — `backend/src/scripts/migrate-kv.ts`
 - [X] T015 [P] `GET /healthz` (ok, storage=postgres, migracje, users count) — `backend/src/modules/health.ts`
-- [ ] T016 [P] Seed dev: klub „Padel Warszawa Test" (invited) + zaproszenie menedżera + 2 korty + godziny 7–23 + cennik 90 min — `backend/src/scripts/seed.ts`
+- [X] T016 [P] Seed dev: klub „Padel Warszawa Test" (invited) + zaproszenie menedżera + 2 korty + godziny 7–23 + cennik 90 min — `backend/src/scripts/seed.ts`
 - [ ] T017 Auth menedżera: accept-invite → hasło (zxcvbn≥3) → TOTP setup/verify (otplib, QR otpauth://, 10 backup codes) → login 2-krokowy (`mfaToken`→`token`); middleware `authManager` egzekwujący ukończone TOTP (`401 MFA_REQUIRED`) — `backend/src/modules/auth/manager.ts`
 - [ ] T018 Aktualizacja deployu: `render.yaml` — serwis `backend/` (build+start, DATABASE_URL sync:false), plan przełączenia ruchu z `server.js` — `render.yaml`
 - [ ] T019 Testy foundational: legacy parity (register/login/state/mutate na Postgresie ≡ stare odpowiedzi) — `backend/tests/legacy-parity.test.ts`
