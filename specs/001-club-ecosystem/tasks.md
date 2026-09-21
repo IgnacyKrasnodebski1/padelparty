@@ -19,7 +19,7 @@
 - [X] T011 Pierwsza migracja + generacja klienta — `backend/prisma/migrations/` *(`0001_init` zaaplikowana na lokalnym Postgresie 16 `padelparty_dev` (26 tabel), klient wygenerowany; APPLY na Supabase prod odroczony do T100 — wymaga hasła DB)*
 - [X] T012 Middleware: `authPlayer` (Bearer P, legacy-kompatybilny), `errorHandler` (`{error}` + kody z contracts), `rateLimiter` — `backend/src/middleware/`
 - [X] T013 Port legacy API 1:1 na Prisma: `POST /api/register|login|logout`, `GET /api/state`, `POST /api/mutate` (wszystkie typy mutacji z server.js; identyczne kształty odpowiedzi) — `backend/src/modules/legacy/` *(pole `username` → `login` wg contracts; PWA i mobile przestawione tym samym commitem)*
-- [ ] T014 Skrypt migracji bloba: `migrate-kv.ts` (REST kv → tabele, tryb `--dry-run`, raport liczności) — `backend/src/scripts/migrate-kv.ts`
+- [X] T014 Skrypt migracji bloba: `migrate-kv.ts` (REST kv → tabele, tryb `--dry-run`, raport liczności) — `backend/src/scripts/migrate-kv.ts` *(sprawdzony na syntetycznym zrzucie: hasło scrypt z legacy loguje się po migracji; bieg na produkcji dopiero w T100)*
 - [X] T015 [P] `GET /healthz` (ok, storage=postgres, migracje, users count) — `backend/src/modules/health.ts`
 - [X] T016 [P] Seed dev: klub „Padel Warszawa Test" (invited) + zaproszenie menedżera + 2 korty + godziny 7–23 + cennik 90 min — `backend/src/scripts/seed.ts`
 - [ ] T017 Auth menedżera: accept-invite → hasło (zxcvbn≥3) → TOTP setup/verify (otplib, QR otpauth://, 10 backup codes) → login 2-krokowy (`mfaToken`→`token`); middleware `authManager` egzekwujący ukończone TOTP (`401 MFA_REQUIRED`) — `backend/src/modules/auth/manager.ts`
