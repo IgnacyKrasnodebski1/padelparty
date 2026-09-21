@@ -1,23 +1,52 @@
+# Blueprint PadelParty.
+#
+# UWAGA: ten plik opisuje JUŻ nowy backend (backend/, Express + Prisma + Postgres).
+# Samo zmergowanie go do main NIE wystarczy i NIE jest bezpieczne w oderwaniu od
+# reszty — kolejność przełączenia opisuje runbook w
+# specs/001-club-ecosystem/quickstart.md („Przełączenie ruchu”). W skrócie:
+# najpierw migracja danych (T100), potem deploy, dopiero na końcu nowe klienty.
+#
+# Stary server.js zostaje w repo do czasu zakończenia migracji — jest planem
+# odwrotu: przywrócenie startCommand na `node server.js` cofa cały cutover.
 services:
   - type: web
     name: padelparty
     runtime: node
-    plan: free
+    plan: free # T103: przed włączeniem płatności produkcyjnych → Starter (webhooki nie mogą spać)
     region: frankfurt
-    buildCommand: ""
-    startCommand: node server.js
+    rootDir: backend
+    buildCommand: npm ci && npx prisma generate && npm run build
+    # migracje lecą przed startem — deploy z niezaaplikowanym schematem ma paść,
+    # a nie wstać i sypać błędami na każdym zapytaniu
+    startCommand: npx prisma migrate deploy && node dist/index.js
     healthCheckPath: /healthz
     envVars:
       - key: NODE_VERSION
         value: "20"
-      # Trwała baza: Supabase — tabela public.kv (id text pk, data jsonb).
-      # URL nie jest sekretem — zarządzany przez blueprint. Klucz (service_role) w dashboardzie.
+
+      # ── Postgres (Supabase) ──────────────────────────────────────────────
+      # runtime przez pooler :6543, migracje przez połączenie bezpośrednie :5432.
+      # Oba zawierają hasło, więc wyłącznie przez dashboard.
+      - key: DATABASE_URL
+        sync: false
+      - key: DIRECT_URL
+        sync: false
+
+      # ── Sekrety aplikacji ────────────────────────────────────────────────
+      - key: JWT_SECRET
+        generateValue: true
+      - key: PLATFORM_URL
+        value: https://padelparty.onrender.com
+
+      # ── Stripe (US1) ─────────────────────────────────────────────────────
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+
+      # ── Stare KV — potrzebne jeszcze skryptowi migracji (T014/T100) ───────
+      # URL nie jest sekretem; klucz (service_role) w dashboardzie.
       - key: SUPABASE_URL
         value: https://ciqwnobxopioznfzhhgj.supabase.co
       - key: SUPABASE_KEY
-        sync: false
-      # Opcja B: Upstash Redis (alternatywnie).
-      - key: UPSTASH_REDIS_REST_URL
-        sync: false
-      - key: UPSTASH_REDIS_REST_TOKEN
         sync: false
