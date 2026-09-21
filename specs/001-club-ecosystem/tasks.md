@@ -24,7 +24,7 @@
 - [X] T016 [P] Seed dev: klub „Padel Warszawa Test" (invited) + zaproszenie menedżera + 2 korty + godziny 7–23 + cennik 90 min — `backend/src/scripts/seed.ts`
 - [ ] T017 Auth menedżera: accept-invite → hasło (zxcvbn≥3) → TOTP setup/verify (otplib, QR otpauth://, 10 backup codes) → login 2-krokowy (`mfaToken`→`token`); middleware `authManager` egzekwujący ukończone TOTP (`401 MFA_REQUIRED`) — `backend/src/modules/auth/manager.ts`
 - [ ] T018 Aktualizacja deployu: `render.yaml` — serwis `backend/` (build+start, DATABASE_URL sync:false), plan przełączenia ruchu z `server.js` — `render.yaml`
-- [ ] T019 Testy foundational: legacy parity (register/login/state/mutate na Postgresie ≡ stare odpowiedzi) — `backend/tests/legacy-parity.test.ts`
+- [X] T019 Testy foundational: legacy parity (register/login/state/mutate na Postgresie ≡ stare odpowiedzi) — `backend/tests/legacy-parity.test.ts`
 
 **Checkpoint**: istniejąca apka mobilna działa na nowym backendzie bez zmian → dopiero wtedy user stories.
 
