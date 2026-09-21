@@ -9,7 +9,7 @@ import { useStore } from '../store';
 export default function Auth() {
   const { register, login } = useStore();
   const [mode, setMode] = useState<'register' | 'login'>('register');
-  const [username, setUsername] = useState('');
+  const [loginName, setLoginName] = useState('');
   const [password, setPassword] = useState('');
   const [emoji, setEmoji] = useState('🎾');
   const [color, setColor] = useState('#6C5CE7');
@@ -18,7 +18,7 @@ export default function Auth() {
 
   const submit = async () => {
     if (loading) return;
-    const u = username.trim();
+    const u = loginName.trim();
     if (u.length < 2) return toast('Wpisz login (min. 2 znaki)');
     if (password.length < 3) return toast('Hasło min. 3 znaki');
     setLoading(true);
@@ -48,7 +48,7 @@ export default function Auth() {
 
         <View style={st.card}>
           <Text style={st.label}>Login</Text>
-          <TextInput value={username} onChangeText={setUsername} placeholder="np. kuba" autoCapitalize="none" autoCorrect={false} returnKeyType="next" placeholderTextColor={C.muted} style={st.input} />
+          <TextInput value={loginName} onChangeText={setLoginName} placeholder="np. kuba" autoCapitalize="none" autoCorrect={false} returnKeyType="next" placeholderTextColor={C.muted} style={st.input} />
           <Text style={st.label}>Hasło</Text>
           <View style={{ justifyContent: 'center' }}>
             <TextInput value={password} onChangeText={setPassword} placeholder="min. 3 znaki" secureTextEntry={!showPass} autoCapitalize="none" autoCorrect={false} returnKeyType="go" onSubmitEditing={submit} placeholderTextColor={C.muted} style={[st.input, { paddingRight: 50 }]} />

@@ -7,8 +7,8 @@ type Store = {
   token: string | null;
   data: Data;
   meId: string | null;
-  register: (username: string, password: string, name: string, emoji: string, color: string) => Promise<void>;
-  login: (username: string, password: string) => Promise<void>;
+  register: (login: string, password: string, name: string, emoji: string, color: string) => Promise<void>;
+  login: (login: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   mutate: (type: string, payload?: any) => Promise<Data>;
 };
@@ -35,14 +35,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     })();
   }, []);
 
-  const register = useCallback(async (username: string, password: string, name: string, emoji: string, color: string) => {
-    const r = await api('/api/register', 'POST', { username, password, name, emoji, color });
+  const register = useCallback(async (login: string, password: string, name: string, emoji: string, color: string) => {
+    const r = await api('/api/register', 'POST', { login, password, name, emoji, color });
     await AsyncStorage.setItem('pp_token', r.token);
     setToken(r.token); setData(r.data); setMeId(r.meId);
   }, []);
 
-  const login = useCallback(async (username: string, password: string) => {
-    const r = await api('/api/login', 'POST', { username, password });
+  const login = useCallback(async (loginName: string, password: string) => {
+    const r = await api('/api/login', 'POST', { login: loginName, password });
     await AsyncStorage.setItem('pp_token', r.token);
     setToken(r.token); setData(r.data); setMeId(r.meId);
   }, []);

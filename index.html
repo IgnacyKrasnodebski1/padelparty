@@ -738,20 +738,20 @@ document.addEventListener('click',e=>{
     case 'onbE': onb.emoji=a.e; document.querySelectorAll('#onbEmoji button').forEach(b=>b.classList.toggle('on',b.dataset.e===a.e)); break;
     case 'onbC': onb.color=a.c; t.parentNode.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.c===a.c)); break;
     case 'doRegister':{
-      const username=(document.getElementById('auName').value||'').trim();
+      const login=(document.getElementById('auName').value||'').trim();
       const password=document.getElementById('auPass').value||'';
-      const name=username||'Gracz';
+      const name=login||'Gracz';
       (async()=>{ try{
-        const r=await api('/api/register','POST',{username,password,name,emoji:onb.emoji,color:onb.color});
+        const r=await api('/api/register','POST',{login,password,name,emoji:onb.emoji,color:onb.color});
         token=r.token; localStorage.setItem('pp_token',token); S=r.data; S.meId=r.meId; ui.tab='home';
         toast('Cześć '+name+'! 🎾'); render(); handleHash();
       }catch(e){ toast(e.message||'Nie udało się'); } })();
       break; }
     case 'doLogin':{
-      const username=(document.getElementById('auName').value||'').trim();
+      const login=(document.getElementById('auName').value||'').trim();
       const password=document.getElementById('auPass').value||'';
       (async()=>{ try{
-        const r=await api('/api/login','POST',{username,password});
+        const r=await api('/api/login','POST',{login,password});
         token=r.token; localStorage.setItem('pp_token',token); S=r.data; S.meId=r.meId; ui.tab='home';
         toast('Siema! 🎾'); render(); handleHash();
       }catch(e){ toast(e.message||'Błąd logowania'); } })();
