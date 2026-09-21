@@ -21,6 +21,7 @@ POST /api/mgr/totp/verify     [setupToken] {code}               → {token}     
 POST /api/mgr/login           {email,password}                  → {mfaToken}           # krok 1
 POST /api/mgr/login/totp      {mfaToken,code}                   → {token}              # krok 2 (lub backupCode)
 POST /api/mgr/logout    [M]
+GET  /api/mgr/me        [M]                                     → {email,clubs:[{id,slug,name,status,role}]}
 ```
 
 ## 2. Klub — konfiguracja (panel) [M]

@@ -1,4 +1,4 @@
-import { randomBytes, randomInt, scryptSync, timingSafeEqual } from 'node:crypto';
+import { randomBytes, randomInt } from 'node:crypto';
 
 /**
  * Identyfikatory w formacie legacy: prefiks + 10 znaków hex.
@@ -19,30 +19,11 @@ export function newToken(): string {
 }
 
 /**
- * Hasła DOKŁADNIE jak w server.js — scrypt z domyślnymi parametrami Node,
- * zapis `saltHex:hashHex`.
- *
- * KRYTYCZNE: sól idzie do scryptSync jako STRING hex, nie jako Buffer. Legacy
- * robiło `scryptSync(pw, salt, 64)` gdzie `salt` to string z randomBytes(16).hex.
- * Zdekodowanie go do bajtów da inny hash i żadne konto przeniesione z produkcji
- * się nie zaloguje.
+ * Hasła graczy — wspólna implementacja scrypt z lib/scrypt.ts (ten sam format
+ * `saltHex:hashHex`, którego używał server.js). Aliasy zostawione pod starymi
+ * nazwami, bo tak nazywa je legacy.
  */
-export function hashPw(pw: string): string {
-  const salt = randomBytes(16).toString('hex');
-  const h = scryptSync(pw, salt, 64).toString('hex');
-  return salt + ':' + h;
-}
-
-export function verifyPw(pw: string, stored: string): boolean {
-  try {
-    const [salt, h] = stored.split(':');
-    if (salt === undefined || h === undefined) return false;
-    const h2 = scryptSync(pw, salt, 64).toString('hex');
-    return timingSafeEqual(Buffer.from(h, 'hex'), Buffer.from(h2, 'hex'));
-  } catch {
-    return false;
-  }
-}
+export { hashSecret as hashPw, verifySecret as verifyPw } from '../../lib/scrypt';
 
 /**
  * Kod party: 5 znaków z alfabetu bez znaków mylących (brak I, L, O, 0, 1).

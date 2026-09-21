@@ -25,6 +25,10 @@ export function rateLimit(opts: RateLimitOptions): RequestHandler {
   const message = opts.message ?? 'Za dużo prób — spróbuj za chwilę';
 
   return (req, _res, next) => {
+    // Testy wykonują dziesiątki żądań pod rząd z jednego adresu. Sam mechanizm
+    // ma własny test jednostkowy, który tę flagę zdejmuje.
+    if (process.env.RATE_LIMIT_OFF === '1') return next();
+
     const ip = req.ip ?? 'unknown';
     const key = opts.key ? opts.key(ip, req.body) : ip;
     const now = Date.now();

@@ -1,6 +1,7 @@
 import path from 'node:path';
 import express from 'express';
 import { errorHandler } from './middleware/errors';
+import { managerRouter } from './modules/auth/manager';
 import { healthz } from './modules/health';
 import { legacyRouter } from './modules/legacy/routes';
 
@@ -21,6 +22,9 @@ app.use((req, res, next) => {
 // Legacy obsługiwał /healthz dla KAŻDEJ metody (server.js), nie tylko GET.
 app.all('/healthz', healthz);
 
+// Kolejność ma znaczenie: legacyRouter kończy się catch-allem na /api/*,
+// więc trasy menedżera muszą być zamontowane przed nim.
+app.use(managerRouter);
 app.use(legacyRouter);
 
 /**

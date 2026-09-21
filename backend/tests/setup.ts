@@ -28,3 +28,7 @@ if (process.env.TEST_DATABASE_URL) {
   process.env.DATABASE_URL = process.env.TEST_DATABASE_URL;
   process.env.DIRECT_URL = process.env.TEST_DATABASE_URL;
 }
+
+// Limiter zliczałby wszystkie żądania testów jako jedno IP; jego mechanizm ma
+// własny test, który tę flagę zdejmuje.
+process.env.RATE_LIMIT_OFF = '1';
