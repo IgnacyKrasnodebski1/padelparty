@@ -5,7 +5,7 @@
 import { randomBytes } from 'node:crypto';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import request from 'supertest';
-import { generateSync } from 'otplib';
+import { authenticator } from 'otplib';
 import { app } from '../src/app';
 import { prisma } from '../src/db';
 import { rateLimit } from '../src/middleware/rateLimit';
@@ -52,7 +52,7 @@ async function onboard(inviteToken: string): Promise<{
   const verify = await request(app)
     .post('/api/mgr/totp/verify')
     .set('Authorization', `Bearer ${setupToken}`)
-    .send({ code: generateSync({ secret: secret! }) });
+    .send({ code: authenticator.generate(secret!) });
   expect(verify.status).toBe(200);
 
   return {
@@ -187,7 +187,7 @@ describe.skipIf(!hasDb)('auth menedżera (2FA obowiązkowe)', () => {
 
     const krok2 = await request(app)
       .post('/api/mgr/login/totp')
-      .send({ mfaToken: krok1.body.mfaToken, code: generateSync({ secret }) });
+      .send({ mfaToken: krok1.body.mfaToken, code: authenticator.generate(secret) });
     expect(krok2.status).toBe(200);
 
     const me = await request(app)

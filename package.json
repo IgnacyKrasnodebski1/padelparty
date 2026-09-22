@@ -3,11 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "description": "PadelParty \u2014 PWA graczy + backend (Express + Prisma na Vercelu). Stary server.js zostaje jako plan odwrotu; uruchamia si\u0119 przez `node server.js`.",
-  "scripts": {
-    "vercel-build": "npm run build",
-    "build": "cd backend && npm ci && npx prisma generate && npm run build"
-  },
   "engines": {
-    "node": ">=20"
+    "node": "22.x"
   }
 }

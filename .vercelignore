@@ -1,3 +1,11 @@
+# UWAGA: obecność tego pliku wyłącza .gitignore jako źródło wykluczeń, więc
+# node_modules i .env trzeba wypisać jawnie — inaczej lokalne, zbudowane pod
+# macOS zależności i sekrety deweloperskie lądują w deployu.
+node_modules
+.env
+.env.*
+.git
+
 # Do deployu idzie backend + statyki PWA. Reszta tylko pogrubia bundle.
 mobile/
 club-web/

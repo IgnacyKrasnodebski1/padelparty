@@ -1,6 +1,6 @@
 import { randomInt } from 'node:crypto';
 import { Router } from 'express';
-import { generateSecret, generateURI, verify as verifyTotp } from 'otplib';
+import { authenticator } from 'otplib';
 import { z } from 'zod';
 import { prisma } from '../../db';
 import { hashSecret, verifySecret } from '../../lib/scrypt';
@@ -90,7 +90,7 @@ managerRouter.post('/api/mgr/totp/setup', sensitive(), async (req, res) => {
   const manager = await prisma.managerAccount.findUnique({ where: { id: managerId } });
   if (!manager) throw new ApiError(401, 'unauth');
 
-  const secret = generateSecret();
+  const secret = authenticator.generateSecret();
   const codes = Array.from({ length: BACKUP_CODE_COUNT }, backupCode);
 
   // Sekret zapisujemy, ale totpEnabled zostaje false aż do verify — dopóki
@@ -102,7 +102,7 @@ managerRouter.post('/api/mgr/totp/setup', sensitive(), async (req, res) => {
 
   // Kody zapasowe pokazujemy RAZ, jawnym tekstem; w bazie leżą tylko ich hashe.
   res.json({
-    otpauthUrl: generateURI({ secret, label: manager.email, issuer: 'PadelParty' }),
+    otpauthUrl: authenticator.keyuri(manager.email, 'PadelParty', secret),
     backupCodes: codes,
   });
 });
@@ -119,8 +119,9 @@ managerRouter.post('/api/mgr/totp/verify', sensitive(), async (req, res) => {
   const manager = await prisma.managerAccount.findUnique({ where: { id: managerId } });
   if (!manager?.totpSecret) throw new ApiError(400, 'Najpierw skonfiguruj aplikację 2FA');
 
-  const result = await verifyTotp({ secret: manager.totpSecret, token: normalizeCode(parsed.data.code) });
-  if (!result.valid) throw new ApiError(401, 'Nieprawidłowy kod');
+  if (!authenticator.check(normalizeCode(parsed.data.code), manager.totpSecret)) {
+    throw new ApiError(401, 'Nieprawidłowy kod');
+  }
 
   await prisma.managerAccount.update({
     where: { id: manager.id },
@@ -171,8 +172,7 @@ managerRouter.post('/api/mgr/login/totp', sensitive(), async (req, res) => {
   const backup = parsed.data.backupCode ? normalizeCode(parsed.data.backupCode) : undefined;
 
   if (code) {
-    const result = await verifyTotp({ secret: manager.totpSecret, token: code });
-    if (!result.valid) throw new ApiError(401, 'Nieprawidłowy kod');
+    if (!authenticator.check(code, manager.totpSecret)) throw new ApiError(401, 'Nieprawidłowy kod');
   } else if (backup) {
     const idx = manager.backupCodes.findIndex((stored) => verifySecret(backup, stored));
     if (idx < 0) throw new ApiError(401, 'Nieprawidłowy kod zapasowy');
