@@ -1,13 +1,13 @@
 {
-  "name": "padelparty-backend",
+  "name": "padelparty",
   "version": "1.0.0",
   "private": true,
-  "description": "PadelParty backend — accounts + shared data (pure Node, zero deps).",
-  "main": "server.js",
+  "description": "PadelParty \u2014 PWA graczy + backend (Express + Prisma na Vercelu). Stary server.js zostaje jako plan odwrotu; uruchamia si\u0119 przez `node server.js`.",
   "scripts": {
-    "start": "node server.js"
+    "vercel-build": "npm run build",
+    "build": "cd backend && npm ci && npx prisma generate && npm run build"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   }
 }

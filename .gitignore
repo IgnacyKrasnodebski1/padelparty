@@ -7,8 +7,12 @@ web-build/
 *.log
 npm-debug.*
 
-# env & sekrety
+# Vercel
+.vercel
+
+# env & sekrety — negacje MUSZĄ być na końcu, inaczej .env* zjada .env.example
 .env
 .env.*
+.env*
 !.env.example
 !*/.env.example
