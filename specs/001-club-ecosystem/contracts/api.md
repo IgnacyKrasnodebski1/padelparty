@@ -1,6 +1,6 @@
 # Kontrakt API — backend/ (001)
 
-Baza: `https://padelparty.onrender.com`. JSON; kwoty w groszach; czasy ISO-8601 UTC. Błędy: `{ "error": string }` + status. Auth: `Authorization: Bearer <token>`; dwa typy tokenów — **P** (gracz, legacy) i **M** (menedżer; wydawany dopiero po zaliczeniu TOTP).
+Baza: `https://padelparty-app.vercel.app`. JSON; kwoty w groszach; czasy ISO-8601 UTC. Błędy: `{ "error": string }` + status. Auth: `Authorization: Bearer <token>`; dwa typy tokenów — **P** (gracz, legacy) i **M** (menedżer; wydawany dopiero po zaliczeniu TOTP).
 
 ## 0. Legacy (bez zmian kontraktu — port 1:1 z server.js)
 ```

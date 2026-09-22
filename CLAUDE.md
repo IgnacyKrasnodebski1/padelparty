@@ -5,16 +5,26 @@ W budowie: **ekosystem klubów** (rezerwacje kortów z płatnością, ligi klubo
 
 **To jest samodzielny projekt.** NIE mieszać z repo STAYZ/PMS (`~/Desktop/STAYZ`) — zero wpisów, symlinków czy speców tam.
 
+## Redesign v2 („Night Court") — AKTYWNY
+
+Nowy design systemu i ekranów: **`DESIGN-V2.md`** (tokeny, komponenty, lista ekranów, kolejność robót,
+warunki odbioru). Makiety: canvas „PadelParty — redesign" w Artifacts (16 artboardów).
+Przy pracy nad UI czytaj `DESIGN-V2.md` PRZED zmianą czegokolwiek w `mobile/src/`.
+Skrót: ciemna baza `#0A0C0F`, akcent volt `#D6FF3E`, zero gradientów, zero emoji w UI,
+awatary = inicjały, Archivo (display/liczby) + Manrope (treść).
+
 ## Stack
 
 - **Mobile** (`mobile/`): Expo SDK 57, React Native 0.86, TypeScript strict; bez zewnętrznego routera (własne taby w `App.tsx`); expo-linear-gradient, AsyncStorage (token)
 - **Web PWA graczy** (`index.html`): vanilla JS, jeden plik, service worker (`sw.js`), manifest — tryb legacy
-- **Backend** (`server.js`): czysty Node zero-deps; dane jako JSON blob w Supabase (tabela `kv`, projekt `ciqwnobxopioznfzhhgj`) przez REST; fallback plik `data.json` (w .gitignore)
-- Docelowo (spec 001): `backend/` Express+Prisma+Supabase Postgres, `club-web/` Next.js (panel klubu + ekran TV), Stripe Connect (PLN, BLIK/P24)
+- **Backend** (`backend/`): Express 5 + Prisma 6 + TS strict, Postgres (Supabase). Legacy API graczy przeniesione 1:1 — patrz `backend/src/modules/legacy/`
+- **Backend legacy** (`server.js`): czysty Node zero-deps, dane jako JSON blob w Supabase przez REST. Wygaszany, trzymany jako plan odwrotu
+- W budowie (spec 001): `club-web/` Next.js (panel klubu + ekran TV), Stripe Connect (PLN, BLIK/P24)
 
 ## Produkcja / pipeline
 
-- **Backend live**: https://padelparty.onrender.com (Render, blueprint `padelparty`, region Frankfurt, plan Free). Health: `/healthz`. Polityka prywatności: `/privacy.html`. UWAGA: auto-deploy bywa wyłączony — po pushu sprawdź, czy wstało; free tier usypia (keep-warm: GitHub Actions `.github/workflows/keep-warm.yml` co 5 min)
+- **Backend live**: https://padelparty-app.vercel.app (Vercel, projekt `padelparty`, funkcja serverless `api/index.js` obsługująca CAŁY ruch: `/api/*`, `/healthz` i statyki PWA). Health: `/healthz`. Polityka prywatności: `/privacy.html`. Baza: Supabase Postgres, projekt `dxarjedtqcfrbdibacfu`, **przez pooler** `aws-0-eu-central-1` (połączenie bezpośrednie `db.<ref>.supabase.co` ma wyłącznie IPv6 i jest nieosiągalne z większości sieci — także z Vercela): runtime port 6543 (`pgbouncer=true`), migracje port 5432.
+- **Stary hosting (plan odwrotu)**: Render + `server.js` + blob KV w projekcie Supabase `ciqwnobxopioznfzhhgj`. Stoi nietknięty do czasu potwierdzenia, że Vercel działa; `render.yaml` i `.github/workflows/keep-warm.yml` zostają w repo właśnie na tę okoliczność. Dane ze starego bloba NIE zostały przeniesione — nowa baza startuje pusta.
 - **GitHub**: https://github.com/IgnacyKrasnodebski1/padelparty (gh zalogowany jako IgnacyKrasnodebski1)
 - **iOS**: EAS build+submit działa NIEINTERAKTYWNIE (cert + profil na koncie Apple FUNZY SP Z O O, `ascAppId` w `mobile/eas.json`):
   ```bash
@@ -28,7 +38,7 @@ W budowie: **ekosystem klubów** (rezerwacje kortów z płatnością, ligi klubo
 ## Konwencje
 
 - TypeScript strict, zero `any`; po każdej zmianie `cd mobile && npx tsc --noEmit`
-- Terminologia: **„login"**, nigdy „ksywa" (decyzja produktowa). Konta graczy = niskotarciowe (login+hasło); konta klubów (spec 001) = e-mail + silne hasło + obowiązkowe 2FA
+- Terminologia: **„login"**, nigdy „ksywa". Pole w API nazywa się `login` (nie `username`) — zmienione wraz z portem legacy; stare buildy iOS wymagają aktualizacji. Konta graczy = niskotarciowe (login+hasło); konta klubów (spec 001) = e-mail + silne hasło + obowiązkowe 2FA
 - Kwoty pieniężne wyłącznie w **groszach (int)**, nigdy float
 - Teksty UI po polsku, user-friendly; toasty zamiast surowych błędów
 - Sekrety tylko w env (Render → Environment); nigdy w repo
@@ -47,7 +57,9 @@ Feature bieżąca: `specs/001-club-ecosystem` (gałąź `001-club-ecosystem`) �
 ## Komendy dev
 
 ```bash
-node server.js                                   # backend lokalnie :8099 (bez env → plik data.json)
+cd backend && npm run dev                        # backend lokalnie :4000 (Postgres z backend/.env)
+node server.js                                   # STARY backend :8099 (plan odwrotu)
+cd backend && npx vitest run                     # testy (parity z legacy + auth menedżera)
 cd mobile && npx expo start --web --port 8090    # apka w przeglądarce
 cd mobile && npx expo start                      # QR dla Expo Go na telefonie
 cd mobile && npx tsc --noEmit                    # typecheck

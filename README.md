@@ -43,7 +43,7 @@ W repo jest `render.yaml`, więc Render sam wie co postawić.
 
 1. Kliknij przycisk → zaloguj się / załóż darmowe konto Render (możesz przez GitHub).
 2. Render odczyta `render.yaml` i postawi serwis `padelparty`. Kliknij **Apply**.
-3. Po chwili dostajesz publiczny adres, np. `https://padelparty.onrender.com`.
+3. Po chwili dostajesz publiczny adres, np. `https://padelparty-app.vercel.app`.
 4. Ten adres = link do PWA (dodaj na telefonie do ekranu głównego) **oraz** wartość `API_URL` dla natywnej apki (`mobile/src/config.ts`).
 
 Serwer sam czyta `PORT` z `process.env.PORT`. Health-check: `/healthz`. Polityka prywatności: `/privacy.html`.

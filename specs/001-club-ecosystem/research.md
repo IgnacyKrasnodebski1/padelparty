@@ -35,7 +35,7 @@
 
 ## R6. Karty klubu (fizyczne)
 
-- **Decision**: Pula kart generowana w panelu: kod `PP-XXXX-XXXX` (Crockford base32, bez O/0/I/1) + **QR z deep-linkiem** `https://padelparty.onrender.com/c/<kod>`; eksport **CSV/PDF do drukarni**. Skan w apce graczy: `expo-camera` + ręczne wpisanie kodu jako fallback. Kod jednorazowo wiązany z kontem (aktywacja), unieważnialny i re-wydawalny (FR-017).
+- **Decision**: Pula kart generowana w panelu: kod `PP-XXXX-XXXX` (Crockford base32, bez O/0/I/1) + **QR z deep-linkiem** `https://padelparty-app.vercel.app/c/<kod>`; eksport **CSV/PDF do drukarni**. Skan w apce graczy: `expo-camera` + ręczne wpisanie kodu jako fallback. Kod jednorazowo wiązany z kontem (aktywacja), unieważnialny i re-wydawalny (FR-017).
 - **Rationale**: deep-link w QR działa też dla osób BEZ apki (trafiają na landing klubu → instalacja → kod czeka) — karta staje się kanałem akwizycji, nie tylko atrybucji (US4). Format czytelny do przepisania ręcznie.
 - **Alternatives considered**: NFC (drożej w druku, iOS wymaga apki i tak), sam QR bez kodu tekstowego (brak fallbacku przy zniszczonym nadruku).
 

@@ -5,13 +5,13 @@ Natywna apka. Backend (`../server.js`) zostaje bez zmian — apka tylko z nim ga
 ## Zanim zaczniesz (wymagania)
 1. **Apple Developer Program — 99 USD / rok** → https://developer.apple.com/programs (rejestracja + akceptacja umów w App Store Connect).
 2. **Konto Expo** (darmowe) → https://expo.dev
-3. **Backend wystawiony w sieci (HTTPS)** — telefon nie dosięgnie `localhost`. Postaw `server.js` np. na Render/Railway (patrz `../README.md`) i weź publiczny adres, np. `https://padelparty.onrender.com`.
+3. **Backend wystawiony w sieci (HTTPS)** — telefon nie dosięgnie `localhost`. Postaw `server.js` np. na Render/Railway (patrz `../README.md`) i weź publiczny adres, np. `https://padelparty-app.vercel.app`.
 4. Mac z Xcode (do finalnej wysyłki / testów w symulatorze; sam build robi chmura EAS).
 
 ## Krok po kroku
 
 ### 1. Wskaż apce backend  ✅ ZROBIONE
-`src/config.ts` już wskazuje na produkcję: `https://padelparty.onrender.com`
+`src/config.ts` już wskazuje na produkcję: `https://padelparty-app.vercel.app`
 (zmieniaj tylko jeśli postawisz backend gdzie indziej).
 
 ### 2. Zainstaluj EAS i zaloguj się

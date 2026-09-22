@@ -44,65 +44,54 @@ Seed: `npm run seed` (backend) — tworzy klub „Padel Warszawa Test" (status `
 1. Na kopii prod bloba: `npm run migrate:kv -- --dry-run` → raport liczności (users/games/parties/tournaments) zgodny z blobem.
 2. Po migracji: istniejące konto ekipy loguje się starym `POST /api/login`, rankingi/historia identyczne jak przed migracją.
 
-## Przełączenie ruchu: server.js na Render → backend/ na Vercelu (runbook T018/T100)
+## Przełączenie ruchu: Render + blob → Vercel + Postgres (stan faktyczny)
 
-Decyzja: backend przenosimy na **Vercel**, razem z `club-web`. Powód: darmowy
-Render zasypia, przez co webhooki Stripe musiałyby czekać na przebudzenie —
-`plan.md` zakładał z tego powodu płatny upgrade. Na Vercelu problem nie istnieje,
-a `keep-warm` przestaje być potrzebny.
+Zrobione:
+- [X] Backend na Vercelu: **https://padelparty-app.vercel.app** (projekt `padelparty`,
+      funkcja `api/index.js` obsługuje `/api/*`, `/healthz` i statyki PWA).
+- [X] Nowy projekt Supabase `dxarjedtqcfrbdibacfu`, schemat `0001_init` zaaplikowany
+      (26 tabel, baza pusta).
+- [X] `mobile/src/config.ts`, listing App Store i kontrakt przestawione na nowy adres.
 
-**Adres jest ważniejszy niż hosting.** `https://padelparty.onrender.com` jest
-dziś wpisany w `mobile/src/config.ts`, w polityce prywatności zgłoszonej do
-App Store (`mobile/STORE-LISTING.md`) i w planowanych deep-linkach kart
-(`research.md`, T041). Jeżeli produkcja stanie pod adresem `*.vercel.app`, ten
-adres wejdzie do kolejnego builda iOS i do listingu — a każda następna zmiana
-hostingu powtórzy tę samą operację. Dlatego **własna domena przed cutoverem**,
-nie po.
+Zostało:
+- [ ] Zmienne produkcyjne na Vercelu: `./scripts/ustaw-zmienne-vercel.sh`
+      (czyta `backend/.env.produkcja`, sekretów nie wypisuje).
+- [ ] Redeploy i weryfikacja `/healthz` → `storage: postgres`, `migrationPending: false`.
+- [ ] Build iOS z nowym `API_URL` → TestFlight.
+- [ ] Adres polityki prywatności w App Store Connect → `/privacy.html` na nowym hoście.
+- [ ] Wygaszenie serwisu na Renderze (patrz niżej — to NIE jest opcjonalne).
 
-### 0. Warunki wstępne
-- [ ] Hasło do bazy Supabase (Settings → Database) — bez niego nie ma ani
-      `DATABASE_URL`, ani `DIRECT_URL`.
-- [ ] Decyzja o adresie produkcyjnym (własna domena vs `*.vercel.app`).
-- [ ] `npx prisma migrate deploy` wykonane na produkcyjnym Postgresie (26 tabel).
-- [ ] `npm run migrate:kv -- --dry-run` na prod blobie: liczności zgodne,
-      lista pominiętych zrozumiała (wiszące id po `delPlayer` są oczekiwane).
-- [ ] Nowy build iOS — stary wysyła `username` i celuje w Render, więc po
-      cutoverze i tak wymaga aktualizacji. Jeden build niesie obie zmiany.
+### Dwie pułapki, na które już wdepnęliśmy
 
-### 1. Migracja danych (jeszcze bez przełączania ruchu)
-1. Uprzedź ekipę, żeby przez kilka minut nie zapisywała gierek — stary backend
-   dalej pisze do bloba i zapisy z tego okna przepadną.
-2. `npm run migrate:kv` (bez `--dry-run`) z `SUPABASE_URL`, `SUPABASE_KEY`,
-   `DATABASE_URL`, `DIRECT_URL`.
-3. Weryfikacja: liczniki z raportu zgadzają się z `/healthz` starego serwisu
-   (`users`), a konto ekipy loguje się przez nowy backend starym hasłem.
+**Połączenie bezpośrednie do Supabase nie działa.** Host `db.<ref>.supabase.co` ma
+wyłącznie rekord AAAA (IPv6) i jest nieosiągalny z większości sieci — także z
+Vercela. Wszystko, łącznie z migracjami, idzie przez pooler
+`aws-0-eu-central-1.pooler.supabase.com`: port 6543 (`pgbouncer=true`) dla
+runtime'u, port 5432 dla migracji, użytkownik `postgres.<ref>`.
 
-### 2. Deploy na Vercel
-4. Projekt na Vercelu wskazujący na korzeń repo; konfiguracja jest w
-   `vercel.json` (install z `backend/`, build = `prisma generate`, cały ruch
-   rewrite'owany do funkcji `api/index.ts`).
-5. Zmienne środowiskowe: `DATABASE_URL` (pooler :6543, `pgbouncer=true`),
-   `DIRECT_URL` (:5432), `JWT_SECRET`, `PLATFORM_URL`, później klucze Stripe.
-6. Preview deploy → sprawdź `/healthz` (`storage: postgres`,
-   `migration: 0001_init`, `migrationPending: false`, `users` zgodne z migracją)
-   oraz `/` (PWA) i `/privacy.html`.
-7. Podepnij domenę i promuj na produkcję.
+**Nazwa projektu Supabase to nie jego identyfikator.** W dashboardzie widać nazwy
+nadane ręcznie, a w konfiguracji siedzi losowy `ref`. Szukanie projektu po nazwie
+prowadzi donikąd — wchodzi się przez `supabase.com/dashboard/project/<ref>`.
 
-### 3. Klienty i wygaszenie Rendera
-8. PWA jedzie razem z backendem (ta sama funkcja, ten sam deploy).
-9. Build iOS z nowym `API_URL` → TestFlight.
-10. Zaktualizuj adres polityki prywatności w App Store Connect.
-11. **Wygaś serwis na Renderze.** Dopóki żyje, stary build apki dalej w niego
-    celuje i zapisuje do bloba KV — dane rozjeżdżają się po cichu, bez błędu.
+### Dane: świadomie NIE przeniesione
+
+Nowa baza startuje pusta. Stary blob (jedno konto) został w projekcie
+`ciqwnobxopioznfzhhgj` i jest nietknięty. Gdyby kiedyś był potrzebny:
+`./scripts/migracja-produkcyjna.sh --dry-run` po wskazaniu starego `SUPABASE_KEY`
+w `backend/.env.produkcja` pokaże, co tam jest, a bieg bez `--dry-run` to przeniesie.
 
 ### Odwrót
-Do czasu kroku 11 Render z `server.js` i blob KV stoją nietknięte, więc odwrót
-to przestawienie `API_URL` z powrotem i kolejny build. Kosztem są zapisy
-wykonane już na Postgresie: NIE wracają do bloba. Dlatego decyzja o odwrocie
-zapada w pierwszych minutach, nie po dniu.
 
-`render.yaml` i `.github/workflows/keep-warm.yml` zostają w repo do czasu
-wygaszenia Rendera — to jest plan odwrotu, nie martwy kod. Usuwamy je w T100.
+Render z `server.js` i stary blob stoją nietknięte, więc odwrót to przestawienie
+`API_URL` w apce z powrotem i kolejny build. Koszt: konta założone już na
+Postgresie nie wracają do bloba.
+
+### Dlaczego Render trzeba wygasić
+
+Dopóki `padelparty.onrender.com` odpowiada, każdy ze starym buildem apki dalej tam
+trafia i zapisuje do starego bloba — **bez żadnego błędu**. Dane rozjeżdżają się po
+cichu. Po potwierdzeniu, że Vercel działa, serwis na Renderze idzie do wyłączenia,
+a `render.yaml` i `keep-warm.yml` znikają z repo.
 
 ## Kryteria zaliczenia fazy
 Wszystkie scenariusze A–E zielone + `npx tsc --noEmit` czyste we wszystkich pakietach + testy jednostkowe slotów/prowizji/lig przechodzą.
