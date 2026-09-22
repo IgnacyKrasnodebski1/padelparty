@@ -44,8 +44,15 @@ esac
 DRY_RUN=""
 [ "${1:-}" = "--dry-run" ] && DRY_RUN="--dry-run"
 
-echo "== 1/3 Schemat: prisma migrate deploy =="
-( cd backend && npx prisma migrate deploy )
+if [ -n "$DRY_RUN" ]; then
+  # Próba na sucho NIE może zakładać tabel — sprawdzamy tylko, czy da się
+  # dosięgnąć bazy i co jest w niej zaaplikowane. Zero zapisów.
+  echo "== 1/3 Schemat: sprawdzenie stanu (bez zapisu) =="
+  ( cd backend && npx prisma migrate status ) || true
+else
+  echo "== 1/3 Schemat: prisma migrate deploy =="
+  ( cd backend && npx prisma migrate deploy )
+fi
 
 echo
 echo "== 2/3 Dane: migrate-kv ${DRY_RUN:-(zapis)} =="
