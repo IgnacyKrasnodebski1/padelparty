@@ -1,0 +1,13 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "installCommand": "npm ci --prefix backend",
+  "buildCommand": "npm --prefix backend exec -- prisma generate",
+  "outputDirectory": ".",
+  "functions": {
+    "api/index.ts": {
+      "maxDuration": 30,
+      "includeFiles": "{index.html,sw.js,manifest.webmanifest,privacy.html,icon.svg,icon-*.png,apple-touch-icon.png}"
+    }
+  },
+  "rewrites": [{ "source": "/(.*)", "destination": "/api/index" }]
+}

@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import path from 'node:path';
 import express from 'express';
 import { errorHandler } from './middleware/errors';
@@ -31,10 +32,22 @@ app.use(legacyRouter);
  * PWA graczy (index.html, sw.js, manifest, ikony, privacy.html) leży w korzeniu
  * repo i woła API jako same-origin (`API=''` w index.html). Dziś serwuje ją
  * `serveStatic` w server.js — bez tego bloku przełączenie ruchu na nowy backend
- * (T018) wyłożyłoby stronę. Ścieżka wychodzi na korzeń repo zarówno z `src/`
- * (tsx dev), jak i ze skompilowanego `dist/`.
+ * wyłożyłoby stronę.
+ *
+ * Katalog wykrywamy po obecności index.html, bo __dirname wypada gdzie indziej
+ * w każdym z trzech środowisk: `src/` pod tsx, `dist/` po kompilacji i bundle
+ * funkcji na Vercelu (tam pasuje dopiero cwd).
  */
-app.use(express.static(path.resolve(__dirname, '..', '..'), { index: 'index.html' }));
+const webRootCandidates = [
+  path.resolve(__dirname, '..', '..'),
+  path.resolve(__dirname, '..'),
+  process.cwd(),
+];
+const webRoot =
+  webRootCandidates.find((dir) => fs.existsSync(path.join(dir, 'index.html'))) ??
+  webRootCandidates[0]!;
+
+app.use(express.static(webRoot, { index: 'index.html' }));
 
 // Musi być ostatni — Express rozpoznaje middleware błędu po czterech argumentach.
 app.use(errorHandler);

@@ -1,0 +1,8 @@
+# Do deployu idzie backend + statyki PWA. Reszta tylko pogrubia bundle.
+mobile/
+club-web/
+specs/
+.specify/
+.claude/
+backend/tests/
+backend/dist/

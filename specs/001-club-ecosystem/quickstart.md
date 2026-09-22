@@ -44,53 +44,65 @@ Seed: `npm run seed` (backend) — tworzy klub „Padel Warszawa Test" (status `
 1. Na kopii prod bloba: `npm run migrate:kv -- --dry-run` → raport liczności (users/games/parties/tournaments) zgodny z blobem.
 2. Po migracji: istniejące konto ekipy loguje się starym `POST /api/login`, rankingi/historia identyczne jak przed migracją.
 
-## Przełączenie ruchu: server.js → backend/ (runbook T018/T100)
+## Przełączenie ruchu: server.js na Render → backend/ na Vercelu (runbook T018/T100)
 
-`render.yaml` opisuje już nowy backend, ale sam merge do `main` NIE jest
-przełączeniem — kolejność poniżej jest obowiązkowa. Najkrótszy opis ryzyka:
-**dane muszą być w Postgresie ZANIM ruch tam trafi, a nowe klienty mogą wyjść
-dopiero po backendzie.**
+Decyzja: backend przenosimy na **Vercel**, razem z `club-web`. Powód: darmowy
+Render zasypia, przez co webhooki Stripe musiałyby czekać na przebudzenie —
+`plan.md` zakładał z tego powodu płatny upgrade. Na Vercelu problem nie istnieje,
+a `keep-warm` przestaje być potrzebny.
+
+**Adres jest ważniejszy niż hosting.** `https://padelparty.onrender.com` jest
+dziś wpisany w `mobile/src/config.ts`, w polityce prywatności zgłoszonej do
+App Store (`mobile/STORE-LISTING.md`) i w planowanych deep-linkach kart
+(`research.md`, T041). Jeżeli produkcja stanie pod adresem `*.vercel.app`, ten
+adres wejdzie do kolejnego builda iOS i do listingu — a każda następna zmiana
+hostingu powtórzy tę samą operację. Dlatego **własna domena przed cutoverem**,
+nie po.
 
 ### 0. Warunki wstępne
-- [ ] Hasło do bazy Supabase (dashboard → Settings → Database) — bez niego nie
-      ma ani `DATABASE_URL`, ani `DIRECT_URL`.
+- [ ] Hasło do bazy Supabase (Settings → Database) — bez niego nie ma ani
+      `DATABASE_URL`, ani `DIRECT_URL`.
+- [ ] Decyzja o adresie produkcyjnym (własna domena vs `*.vercel.app`).
 - [ ] `npx prisma migrate deploy` wykonane na produkcyjnym Postgresie (26 tabel).
 - [ ] `npm run migrate:kv -- --dry-run` na prod blobie: liczności zgodne,
       lista pominiętych zrozumiała (wiszące id po `delPlayer` są oczekiwane).
-- [ ] Nowy build iOS w TestFlighcie — stary wysyła `username` i po cutoverze
-      przestanie się logować.
+- [ ] Nowy build iOS — stary wysyła `username` i celuje w Render, więc po
+      cutoverze i tak wymaga aktualizacji. Jeden build niesie obie zmiany.
 
 ### 1. Migracja danych (jeszcze bez przełączania ruchu)
-1. Tryb tylko-do-odczytu de facto: uprzedź ekipę, żeby przez kilka minut nie
-   zapisywała gierek — stary backend dalej pisze do bloba i zapisy z tego okna
-   przepadną.
-2. `npm run migrate:kv` (bez `--dry-run`) z ustawionymi `SUPABASE_URL`,
-   `SUPABASE_KEY`, `DATABASE_URL`, `DIRECT_URL`.
+1. Uprzedź ekipę, żeby przez kilka minut nie zapisywała gierek — stary backend
+   dalej pisze do bloba i zapisy z tego okna przepadną.
+2. `npm run migrate:kv` (bez `--dry-run`) z `SUPABASE_URL`, `SUPABASE_KEY`,
+   `DATABASE_URL`, `DIRECT_URL`.
 3. Weryfikacja: liczniki z raportu zgadzają się z `/healthz` starego serwisu
    (`users`), a konto ekipy loguje się przez nowy backend starym hasłem.
 
-### 2. Deploy backendu
-4. Merge gałęzi do `main`; w Renderze zsynchronizuj blueprint (zmiana
-   `rootDir`/`startCommand` wymaga akceptacji) i uzupełnij sekrety oznaczone
-   `sync: false`.
-5. Deploy. `startCommand` sam odpala `prisma migrate deploy` — deploy z
-   niezaaplikowanym schematem ma paść, a nie wstać i sypać błędami.
-6. Sprawdź `/healthz`: `storage: "postgres"`, `migration: "0001_init"`,
-   `migrationPending: false`, `users` zgodne z migracją.
-7. Sprawdź, że PWA wstaje pod `/` (nowy backend serwuje statyki z korzenia repo).
+### 2. Deploy na Vercel
+4. Projekt na Vercelu wskazujący na korzeń repo; konfiguracja jest w
+   `vercel.json` (install z `backend/`, build = `prisma generate`, cały ruch
+   rewrite'owany do funkcji `api/index.ts`).
+5. Zmienne środowiskowe: `DATABASE_URL` (pooler :6543, `pgbouncer=true`),
+   `DIRECT_URL` (:5432), `JWT_SECRET`, `PLATFORM_URL`, później klucze Stripe.
+6. Preview deploy → sprawdź `/healthz` (`storage: postgres`,
+   `migration: 0001_init`, `migrationPending: false`, `users` zgodne z migracją)
+   oraz `/` (PWA) i `/privacy.html`.
+7. Podepnij domenę i promuj na produkcję.
 
-### 3. Klienty
-8. PWA jedzie razem z backendem (ten sam serwis, ten sam deploy).
-9. Wypuść build iOS z TestFlighta do ekipy.
+### 3. Klienty i wygaszenie Rendera
+8. PWA jedzie razem z backendem (ta sama funkcja, ten sam deploy).
+9. Build iOS z nowym `API_URL` → TestFlight.
+10. Zaktualizuj adres polityki prywatności w App Store Connect.
+11. **Wygaś serwis na Renderze.** Dopóki żyje, stary build apki dalej w niego
+    celuje i zapisuje do bloba KV — dane rozjeżdżają się po cichu, bez błędu.
 
 ### Odwrót
-Przywróć w Renderze poprzedni `startCommand` (`node server.js`) i usuń
-`rootDir` — `server.js` oraz blob KV zostają nietknięte przez całą operację,
-więc cofnięcie jest natychmiastowe. Kosztem są zapisy wykonane na Postgresie
-po cutoverze: NIE wracają do bloba, trzeba je przenieść ręcznie. Dlatego
-decyzję o odwrocie podejmujemy w pierwszych minutach, nie po dniu.
+Do czasu kroku 11 Render z `server.js` i blob KV stoją nietknięte, więc odwrót
+to przestawienie `API_URL` z powrotem i kolejny build. Kosztem są zapisy
+wykonane już na Postgresie: NIE wracają do bloba. Dlatego decyzja o odwrocie
+zapada w pierwszych minutach, nie po dniu.
 
-`server.js` usuwamy dopiero, gdy nowy backend przeżyje kilka dni (T100).
+`render.yaml` i `.github/workflows/keep-warm.yml` zostają w repo do czasu
+wygaszenia Rendera — to jest plan odwrotu, nie martwy kod. Usuwamy je w T100.
 
 ## Kryteria zaliczenia fazy
 Wszystkie scenariusze A–E zielone + `npx tsc --noEmit` czyste we wszystkich pakietach + testy jednostkowe slotów/prowizji/lig przechodzą.

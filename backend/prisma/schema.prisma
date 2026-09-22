@@ -4,6 +4,9 @@
 
 generator client {
   provider = "prisma-client-js"
+  // rhel-openssl-3.0.x — runtime funkcji na Vercelu (Amazon Linux 2023).
+  // Bez tego silnik zbudowany pod macOS nie wystartuje na produkcji.
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
 datasource db {
